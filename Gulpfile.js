@@ -21,5 +21,14 @@ gulp.task('scripts', function() {
   .pipe(gulp.dest('dist'));
 });
 
-// Task to generate dist:
+// Task to generate dist files:
 gulp.task('build', [ 'scripts' ]);
+
+// Watch Generate bundle on change src:
+gulp.task('watch', function() {
+  util.log('Watching changes...');
+  gulp.watch([ jsFiles ], [ 'scripts' ]);
+});
+
+// watch changes on src to re-generate dist files:
+gulp.task('default', [ 'watch' ]);
