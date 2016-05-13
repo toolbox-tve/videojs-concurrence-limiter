@@ -109,4 +109,5 @@ var player = videojs("myVideo",
 ### TODO
 --------
 
-- [ ] .
+- [ ] Complete Options in README.
+- [ ] Create unit test specs.
