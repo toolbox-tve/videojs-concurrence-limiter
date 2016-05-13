@@ -40,9 +40,9 @@
           {
               body: data ? JSON.stringify(data) : '{}',
               url: url,
-              method: "POST",
+              method: 'POST',
               headers: {
-                  "Content-Type": "application/json"
+                  'Content-Type': 'application/json'
               }
           },
           function (err, resp, body) {

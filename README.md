@@ -18,16 +18,33 @@ The *dist* folder contains the library bundles: for debugging or the minfied ver
 
 ##### Development:
 - Install the dependencies with npm:
-```
+```sh
 $ npm install
 ```
 - You can test with te example folder and using gulp to watch changes:
-```
-$ gulp
+```sh
+$ npm run watch
 ```
 - To generate a build:
+```sh
+$ npm run build
 ```
-$ gulp build
+- Run linter:
+```sh
+$ npm run lint
+```
+
+##### Testing:
+Unit Test are on test folder, using karma & qunit:
+```sh
+$ npm run test
+```
+- Run Specific browser tests:
+```sh
+$ npm run test:chrome
+$ npm run test:firefox
+$ npm run test:ie
+$ npm run test:safari
 ```
 
 ### Dependencies
@@ -79,6 +96,15 @@ var player = videojs("myVideo",
     }
 });
 ```
+##### Available options:
+| Option | Type | Default | Description |
+| --- | --- | --- | --- |
+| `playerID` | string | `none` |  |
+| `accessurl` | string | `none` |  |
+| `updateurl` | string | `none` |  |
+| `disposeurl` | string | `none` |  |
+| `startPosition` | number | `none` |  |
+
 
 ### TODO
 --------
