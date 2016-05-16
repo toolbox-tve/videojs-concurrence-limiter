@@ -4,12 +4,12 @@
   "description": "A Video.js plugin for concurrency control on played contents",
   "repository": {
     "type": "git",
-    "url": "git@github.com:TBX-Interactive/videojs-concurrence-limiter.git"
+    "url": "git@github.com:toolbox-tve/videojs-concurrence-limiter.git"
   },
   "bugs": {
-    "url": "https://github.com/TBX-Interactive/videojs-concurrence-limiter/issues"
+    "url": "https://github.com/toolbox-tve/videojs-concurrence-limiter/issues"
   },
-  "homepage": "https://github.com/TBX-Interactive/videojs-concurrence-limiter",
+  "homepage": "https://github.com/toolbox-tve/videojs-concurrence-limiter",
   "main": "src/js/videojs.concurrence.js",
   "dependencies": {
     "jquery": "^2.2.3",
@@ -44,7 +44,10 @@
     "test:safari": "node_modules/.bin/karma start test/karma.conf.js --browsers Safari",
     "lint": "node_modules/.bin/eslint src"
   },
-  "author": "dluna <dluna@tbxnet.com>",
+  "author": "ToolBox-tve",
+  "contributors": [
+    "dluna <dluna@tbxnet.com>"
+  ],
   "license": "Apache-2.0",
   "keywords": [
     "player",

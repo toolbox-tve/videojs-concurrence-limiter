@@ -6,6 +6,13 @@ var PlayerModule = PlayerModule || (function () {
         width: 320,
         height: 240,
         plugins: {
+          concurrenceview: {
+            playerID: Math.random().toString(32),
+            accessurl: '/path/to/limiter-server' + '/canplay',
+            updateurl: '/path/to/limiter-server' + '/nowplaying',
+            disposeurl: '/path/to/limiter-server' + '/stop',
+            startPosition: 123
+          }
 
         }
     });
