@@ -31,11 +31,12 @@ module.exports = function(config) {
     frameworks: frameworks,
 
     files: [
+      'dist/videojs-concurrence-limiter.css',
       'node_modules/sinon/pkg/sinon.js',
       'node_modules/sinon/pkg/sinon-ie.js',
       'node_modules/video.js/dist/video.js',
       'node_modules/video.js/dist/video-js.css',
-      'dist/videojs.concurrence.min.js'
+      'test/dist/bundle.js'
     ],
 
     browsers: browsers,
