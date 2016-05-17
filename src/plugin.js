@@ -31,7 +31,7 @@ class ConcurrentViewPlugin {
     videojs.xhr(
       {
         body: data ? JSON.stringify(data) : '{}',
-        url: url,
+        url,
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -51,10 +51,10 @@ class ConcurrentViewPlugin {
         player: this.options.playerID
       },
       (error, ok) => {
-        if(error) {
+        if (error) {
           videojs.log('concurrenceview: canplay api error', error);
           cb(new Error(error), null);
-          return ;
+          return;
         }
 
         if (ok && ok.success) {
@@ -80,15 +80,14 @@ class ConcurrentViewPlugin {
 
     this.player.trigger({
       type: 'avplayerbloked',
-      code: code,
-      reason: reason,
-      error: error
+      code,
+      reason,
+      error
     });
 
     this.player.pause();
     this.player.dispose();
   }
-
 
   recoverStatus(info) {
     if (!info.position) {
@@ -101,7 +100,7 @@ class ConcurrentViewPlugin {
 
   }
 
-  ///////////
+  /* ************** */
 
   makeWatchdog(ok) {
 
@@ -110,14 +109,15 @@ class ConcurrentViewPlugin {
     let player = this.player;
 
     let lasTime = options.startPosition || 0;
-    let playerToken, playerID = options.playerID;
+    let playerToken = null;
+    let playerID = options.playerID;
     let loadedmetadata = false;
 
-    player.on('loadedmetadata', () => loadedmetadata = true );
+    player.on('loadedmetadata', () => loadedmetadata = true);
 
     player.on('timeupdate', (e) => {
 
-      if(!loadedmetadata || !this.fistSent ) {
+      if (!loadedmetadata || !this.fistSent) {
         this.fistSent = true;
         return;
       }
@@ -127,8 +127,7 @@ class ConcurrentViewPlugin {
 
     videojs.log('concurrence plugin: ok', ok);
 
-
-    var cleanUp = () => {
+    let cleanUp = () => {
       videojs.log('concurrenceview: DISPOSE', options);
 
       if (watchdog) {
@@ -143,7 +142,8 @@ class ConcurrentViewPlugin {
             token: playerToken,
             status: 'paused'
           },
-          function(){});
+          () => {}
+        );
 
       }
     };
@@ -154,11 +154,11 @@ class ConcurrentViewPlugin {
 
     if (!watchdog) {
 
-      var wdf = () => {
+      let wdf = () => {
 
         player.trigger({
           type: 'avplayerupdate',
-          playerID: playerID
+          playerID
         });
 
         this.makeRequest(
@@ -169,21 +169,21 @@ class ConcurrentViewPlugin {
             position: lasTime,
             status: player.paused() ? 'paused' : 'playing'
           },
-          function (error, ok) {
+          (error, response) => {
 
-            if(error) {
+            if (error) {
               videojs.log('concurrenceview: update api error', error);
               this.blockPlayer(player, 'authapifail', {msg: error});
               return;
             }
 
-            if (ok && ok.success) {
-              playerID = ok.player || playerID;
-              playerToken = ok.token || playerToken;
+            if (response && response.success) {
+              playerID = response.player || playerID;
+              playerToken = response.token || playerToken;
 
             } else {
-              videojs.log(new Error('Player Auth error'), ok);
-              this.blockPlayer(player, 'noauth', ok);
+              videojs.log(new Error('Player Auth error'), response);
+              this.blockPlayer(player, 'noauth', response);
             }
           }
         );
@@ -195,9 +195,7 @@ class ConcurrentViewPlugin {
 
   }
 
-  ///////////
 }
-
 
 /**
  * Function to invoke when the player is ready.
@@ -216,21 +214,20 @@ const onPlayerReady = (player, options) => {
   player._cvPlugin = new ConcurrentViewPlugin(options, player);
   let cvPlugin = player._cvPlugin;
 
-  cvPlugin.validatePlay( function (error, ok) {
+  cvPlugin.validatePlay((error, ok) => {
 
     if (error) {
       videojs.log('concurrenceview: error', error);
-      cvPlugin.blockPlayer( 'cantplay', error);
+      cvPlugin.blockPlayer('cantplay', error);
 
     } else {
 
       cvPlugin.recoverStatus(ok);
-      //monitor
+      // monitor
       cvPlugin.makeWatchdog(ok);
     }
 
   });
-
 
 };
 
@@ -254,21 +251,21 @@ const concurrenceLimiter = function(useroptions) {
 
   if (!options.accessurl || !options.updateurl || !options.disposeurl) {
     videojs.log('concurrenceview: invalid urls', options);
-    return ;
+    return;
   }
 
   if (!options.interval || options.interval < 5) {
     videojs.log('concurrenceview: invalid options', options);
-    return ;
+    return;
   }
 
   if (!$) {
     videojs.log('concurrenceview: invalid jquery', options);
-    return ;
+    return;
   }
 
   this.ready(() => {
-    onPlayerReady(this,  options);
+    onPlayerReady(this, options);
   });
 };
 
