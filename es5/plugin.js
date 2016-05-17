@@ -34,7 +34,6 @@ var ConcurrentViewPlugin = (function () {
 
     this.options = options;
     this.player = player;
-    this.watchdog = null;
   }
 
   /**
@@ -74,6 +73,7 @@ var ConcurrentViewPlugin = (function () {
   }, {
     key: 'validatePlay',
     value: function validatePlay(cb) {
+      var _this = this;
 
       this.makeRequest(this.options.accessurl, {
         player: this.options.playerID
@@ -87,7 +87,7 @@ var ConcurrentViewPlugin = (function () {
         if (ok && ok.success) {
           cb(null, ok);
 
-          this.player.trigger({
+          _this.player.trigger({
             type: 'avplayercanplay',
             code: 1
           });
@@ -95,6 +95,128 @@ var ConcurrentViewPlugin = (function () {
           cb(new Error('Player Auth error'), null);
         }
       });
+    }
+  }, {
+    key: 'blockPlayer',
+    value: function blockPlayer(code, error, reason) {
+      code = code || 'error';
+      reason = reason || 'Has alcanzado la cantidad maxima de players activos.';
+
+      _videoJs2['default'].log('concurrenceview: stop player - ', reason);
+
+      this.player.trigger({
+        type: 'avplayerbloked',
+        code: code,
+        reason: reason,
+        error: error
+      });
+
+      this.player.pause();
+      this.player.dispose();
+    }
+  }, {
+    key: 'recoverStatus',
+    value: function recoverStatus(info) {
+      var _this2 = this;
+
+      if (!info.position) {
+        return;
+      }
+
+      this.player.currentTime = info.position;
+
+      this.player.on('loadedmetadata', function () {
+        return _this2.currentTime = info.position;
+      });
+    }
+
+    /* ************** */
+
+  }, {
+    key: 'makeWatchdog',
+    value: function makeWatchdog(ok) {
+      var _this3 = this;
+
+      var watchdog = null;
+      var options = this.options;
+      var player = this.player;
+
+      var lasTime = options.startPosition || 0;
+      var playerToken = null;
+      var playerID = options.playerID;
+      var loadedmetadata = false;
+
+      player.on('loadedmetadata', function () {
+        return loadedmetadata = true;
+      });
+
+      player.on('timeupdate', function (e) {
+
+        if (!loadedmetadata || !_this3.fistSent) {
+          _this3.fistSent = true;
+          return;
+        }
+
+        lasTime = Math.round(player.currentTime() || 0);
+      });
+
+      _videoJs2['default'].log('concurrence plugin: ok', ok);
+
+      var cleanUp = function cleanUp() {
+        _videoJs2['default'].log('concurrenceview: DISPOSE', options);
+
+        if (watchdog) {
+          player.clearInterval(watchdog);
+          watchdog = false;
+
+          _this3.makeRequest(options.disposeurl, {
+            player: playerID,
+            position: lasTime,
+            token: playerToken,
+            status: 'paused'
+          }, function () {});
+        }
+      };
+
+      player.on('dispose', cleanUp);
+
+      window.addEventListener('beforeunload', cleanUp);
+
+      if (!watchdog) {
+
+        var wdf = function wdf() {
+
+          player.trigger({
+            type: 'avplayerupdate',
+            playerID: playerID
+          });
+
+          _this3.makeRequest(options.updateurl, {
+            player: playerID,
+            token: playerToken,
+            position: lasTime,
+            status: player.paused() ? 'paused' : 'playing'
+          }, function (error, response) {
+
+            if (error) {
+              _videoJs2['default'].log('concurrenceview: update api error', error);
+              _this3.blockPlayer(player, 'authapifail', { msg: error });
+              return;
+            }
+
+            if (response && response.success) {
+              playerID = response.player || playerID;
+              playerToken = response.token || playerToken;
+            } else {
+              _videoJs2['default'].log(new Error('Player Auth error'), response);
+              _this3.blockPlayer(player, 'noauth', response);
+            }
+          });
+        };
+
+        watchdog = player.setInterval(wdf, options.interval * 1000);
+        wdf();
+      }
     }
   }]);
 
@@ -111,12 +233,12 @@ var onPlayerReady = function onPlayerReady(player, options) {
 
     if (error) {
       _videoJs2['default'].log('concurrenceview: error', error);
-      cvPlugin.blockPlayer(player, 'cantplay', error);
+      cvPlugin.blockPlayer('cantplay', error);
     } else {
 
-      cvPlugin.recoverStatus(ok, player);
-      //monitor
-      cvPlugin.makeWatchdog(options, player, ok);
+      cvPlugin.recoverStatus(ok);
+      // monitor
+      cvPlugin.makeWatchdog(ok);
     }
   });
 };
@@ -134,7 +256,7 @@ var onPlayerReady = function onPlayerReady(player, options) {
  *           An object of options left to the plugin author to define.
  */
 var concurrenceLimiter = function concurrenceLimiter(useroptions) {
-  var _this = this;
+  var _this4 = this;
 
   var options = _videoJs2['default'].mergeOptions(defaults, useroptions);
 
@@ -150,13 +272,8 @@ var concurrenceLimiter = function concurrenceLimiter(useroptions) {
     return;
   }
 
-  if (!$) {
-    _videoJs2['default'].log('concurrenceview: invalid jquery', options);
-    return;
-  }
-
   this.ready(function () {
-    onPlayerReady(_this, options);
+    onPlayerReady(_this4, options);
   });
 };
 

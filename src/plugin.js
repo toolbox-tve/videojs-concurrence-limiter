@@ -150,7 +150,7 @@ class ConcurrentViewPlugin {
 
     player.on('dispose', cleanUp);
 
-    $(window).on('beforeunload', cleanUp);
+    window.addEventListener('beforeunload', cleanUp);
 
     if (!watchdog) {
 
@@ -256,11 +256,6 @@ const concurrenceLimiter = function(useroptions) {
 
   if (!options.interval || options.interval < 5) {
     videojs.log('concurrenceview: invalid options', options);
-    return;
-  }
-
-  if (!$) {
-    videojs.log('concurrenceview: invalid jquery', options);
     return;
   }
 
