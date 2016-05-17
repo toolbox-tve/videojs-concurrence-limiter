@@ -3,52 +3,57 @@
 
 (function (videojs, $) {
     'use strict';
-
-    var defaults = {
-        interval: 10,
-        accessurl: null,
-        updateurl: null,
-        disposeurl: null,
-        playerID: null,
-        startPosition: 0
-    };
-
-    var extend = Object.assign || function () {
-        var args, target, i, object, property;
-
-        args = Array.prototype.slice.call(arguments);
-        target = args.shift() || {};
-
-        for (i in args) {
-            object = args[i];
-            for (property in object) {
-                if (object.hasOwnProperty(property)) {
-                    if (typeof object[property] === 'object') {
-                        target[property] = extend(target[property], object[property]);
-                    } else {
-                        target[property] = object[property];
-                    }
-                }
-            }
-        }
-        return target;
-    };
+    /*
+        var defaults = {
+          interval: 10,
+          accessurl: null,
+          updateurl: null,
+          disposeurl: null,
+          playerID: null,
+          startPosition: 0
+        };
+    
+        var extend = Object.assign || function () {
+          var args, target, i, object, property;
+    
+          args = Array.prototype.slice.call(arguments);
+          target = args.shift() || {};
+    
+          for (i in args) {
+              object = args[i];
+              for (property in object) {
+                  if (object.hasOwnProperty(property)) {
+                      if (typeof object[property] === 'object') {
+                          target[property] = extend(target[property], object[property]);
+                      } else {
+                          target[property] = object[property];
+                      }
+                  }
+              }
+          }
+          return target;
+        };
+      */
 
     var watchdog = null;
-
-    var makeRequest = function makeRequest(url, data, cb) {
-
-        videojs.xhr({
-            body: data ? JSON.stringify(data) : '{}',
-            url: url,
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        }, function (err, resp, body) {
-            cb(err ? err.message || err : null, body ? JSON.parse(body) : null);
-        });
-    };
+    /*
+        var makeRequest = function(url, data, cb) {
+    
+          videojs.xhr(
+              {
+                  body: data ? JSON.stringify(data) : '{}',
+                  url: url,
+                  method: 'POST',
+                  headers: {
+                      'Content-Type': 'application/json'
+                  }
+              },
+              function (err, resp, body) {
+                  cb(err ? err.message || err : null, body ? JSON.parse(body) : null);
+              }
+          );
+        };
+      */
 
     var makeWatchdog = function makeWatchdog(options, player, ok) {
 

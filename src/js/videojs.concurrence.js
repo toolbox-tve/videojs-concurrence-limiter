@@ -1,7 +1,7 @@
 /* globals videojs */
 (function (videojs, $) {
     'use strict';
-
+/*
     var defaults = {
       interval: 10,
       accessurl: null,
@@ -31,9 +31,10 @@
       }
       return target;
     };
+  */
 
-    var watchdog = null;
-
+   // var watchdog = null;
+/*
     var makeRequest = function(url, data, cb) {
 
       videojs.xhr(
@@ -50,7 +51,9 @@
           }
       );
     };
+  */
 
+  /*
     var makeWatchdog = function (options, player, ok) {
 
       var lasTime = options.startPosition || 0;
@@ -140,7 +143,9 @@
       }
 
     };
-
+    
+    */
+/*
     var blockPlayer = function (player, code, error, reason) {
         code = code || 'error';
         reason = reason || 'Has alcanzado la cantidad maxima de players activos.';
@@ -157,7 +162,9 @@
         player.pause();
         player.dispose();
     };
+  */
 
+  /*
     var canplay = function (options, player, cb) {
 
       makeRequest(
@@ -186,7 +193,8 @@
       );
 
     };
-
+*/
+  /*
     var recoverStatus = function (info, player) {
         if (!info.position) {
             return;
@@ -199,7 +207,9 @@
         });
 
     };
+  */
 
+  /*
     ////events
     var makeCheks = function (options, player) {
 
@@ -239,11 +249,11 @@
             });
         };
     };
-
+*/
 
     /**
      * Register the Plugin
-     */
+    
     videojs.plugin('concurrenceview', function (pluginoptions) {
 
         var options = extend({}, defaults, pluginoptions);
@@ -253,6 +263,6 @@
 
         player.ready(makeCheks(options, player), false);
 
-    });
+    }); */
 
 })(window.videojs, window.jQuery);
