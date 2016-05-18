@@ -1,3 +1,7 @@
+/**
+ * simple class to handle server reponses
+ *
+ */
 class SimpleLimitServer {
 
   constructor(maxPlayers) {
@@ -5,6 +9,11 @@ class SimpleLimitServer {
     this.players = { };
   }
 
+  /**
+   * validates current players
+   * @param params
+   * @returns {*}
+     */
   canplay(params) {
 
     let players = Object.keys(this.players);
@@ -24,6 +33,11 @@ class SimpleLimitServer {
     };
   }
 
+  /**
+   * play update (position, status, etc)
+   * @param params
+   * @returns {*}
+     */
   playing(params) {
 
     // validate existent
@@ -45,6 +59,12 @@ class SimpleLimitServer {
     };
   }
 
+  /**
+   * stop current player
+   *
+   * @param params
+   * @returns {{success: boolean}}
+     */
   stop(params) {
     // unblock
     delete this.players[params.player];
@@ -52,6 +72,12 @@ class SimpleLimitServer {
     return {success: true};
   }
 
+  /**
+   * parse body
+   *
+   * @param url
+   * @param body
+     */
   getBodyParams(url, body) {
 
     let params = JSON.parse(body);
@@ -63,6 +89,13 @@ class SimpleLimitServer {
     return params;
   }
 
+  /**
+   * main midleware entry
+   * @param url
+   * @param req
+   * @param res
+     * @param next
+     */
   handleRequest(url, req, res, next) {
 
     if (req.method !== 'POST') {
@@ -85,6 +118,15 @@ class SimpleLimitServer {
 
   }
 
+  /**
+   * url-base reponse
+   *
+   * @param url
+   * @param req
+   * @param res
+   * @param next
+     * @param body
+     */
   sendResponse(url, req, res, next, body) {
 
     let response = null;
@@ -127,6 +169,13 @@ class SimpleLimitServer {
     this.sendJsonReponse(res, 200, response);
   }
 
+  /**
+   * http reponse
+   *
+   * @param res
+   * @param status
+   * @param json
+     */
   sendJsonReponse(res, status, json) {
     res.setHeader('content-type', 'application/json');
     res.end(JSON.stringify(json) || '??');
