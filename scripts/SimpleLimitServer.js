@@ -17,17 +17,15 @@ class SimpleLimitServer {
   canplay(params) {
 
     let players = Object.keys(this.players);
+    let canplay = true;
 
     // limit exided and player not included
-    if (players.length >= this.maxPlayers && players.indexOf(params.player) !== -1) {
-      return {
-        success: false,
-        player: params.player
-      };
+    if (players.length >= this.maxPlayers) {
+      canplay  = players.indexOf(params.player) !== -1;
     }
 
     return {
-      success: true,
+      success: canplay,
       player: params.player,
       token: 'SomeHelpfulValidationToken'
     };
@@ -49,6 +47,7 @@ class SimpleLimitServer {
 
     // block
     this.players[params.player] = params;
+    this.players[params.player].lastUpdate = new Date();
 
     return {
       success: true,
@@ -108,12 +107,19 @@ class SimpleLimitServer {
     }
 
     let body = [];
-    let fnc = this.sendResponse.bind(this);
+    let me = this;
 
     req
       .on('data', (chunk) => body.push(chunk))
+      .on('error', (error) => {
+        me.sendJsonReponse(res, 400, {
+          success: false,
+          error: true,
+          message: error.message
+        });
+      })
       .on('end', () => {
-        fnc(url, req, res, next, Buffer.concat(body).toString());
+        me.sendResponse(url, req, res, next, Buffer.concat(body).toString());
       });
 
   }
@@ -161,6 +167,16 @@ class SimpleLimitServer {
       response = this.stop(params);
       break;
 
+    case '/limiter/players':
+      let keys = Object.keys(this.players);
+
+      response = {
+        count: keys.length,
+        all: keys,
+        data: this.players
+      };
+      break;
+
     default:
       next();
       return;
@@ -178,7 +194,7 @@ class SimpleLimitServer {
      */
   sendJsonReponse(res, status, json) {
     res.setHeader('content-type', 'application/json');
-    res.end(JSON.stringify(json) || '??');
+    res.end(JSON.stringify(json, null, 3) || '??');
   }
 
 }
