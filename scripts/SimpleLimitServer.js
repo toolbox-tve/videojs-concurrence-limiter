@@ -21,7 +21,7 @@ class SimpleLimitServer {
 
     // limit exided and player not included
     if (players.length >= this.maxPlayers) {
-      canplay  = players.indexOf(params.player) !== -1;
+      canplay = players.indexOf(params.player) !== -1;
     }
 
     return {
@@ -107,19 +107,20 @@ class SimpleLimitServer {
     }
 
     let body = [];
-    let me = this;
+    let sendError = this.sendJsonReponse.bind(this);
+    let resp = this.sendResponse.bind(this);
 
     req
       .on('data', (chunk) => body.push(chunk))
       .on('error', (error) => {
-        me.sendJsonReponse(res, 400, {
+        sendError(res, 400, {
           success: false,
           error: true,
           message: error.message
         });
       })
       .on('end', () => {
-        me.sendResponse(url, req, res, next, Buffer.concat(body).toString());
+        resp(url, req, res, next, Buffer.concat(body).toString());
       });
 
   }

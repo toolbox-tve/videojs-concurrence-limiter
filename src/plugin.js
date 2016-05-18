@@ -21,18 +21,17 @@ class ConcurrentViewIdMaker {
 
   generate(options) {
 
-    //user-made id
-    if(options.playerID) {
+    // user-made id
+    if (options.playerID) {
       return options.playerID;
     }
 
-    return this.generateBySessionStorage() || ('rdm-'+this.generateRandom());
+    return this.generateBySessionStorage() || ('rdm-' + this.generateRandom());
   }
 
   generateRandom(len) {
-    return Math.random().toString( (len || 30) + 2 ).substr(2);
+    return Math.random().toString((len || 30) + 2).substr(2);
   }
-
 
   generateBySessionStorage() {
 
@@ -43,7 +42,7 @@ class ConcurrentViewIdMaker {
     let id = window.sessionStorage.getItem(this.sessionStorageKey);
 
     if (!id) {
-      id = 'ssi-'+this.generateRandom();
+      id = 'ssi-' + this.generateRandom();
       window.sessionStorage.setItem(this.sessionStorageKey, id);
     }
 

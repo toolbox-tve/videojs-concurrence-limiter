@@ -25,8 +25,57 @@ var defaults = {
 };
 
 /**
- * main plugin component class
+ * creates player ids
  */
+
+var ConcurrentViewIdMaker = (function () {
+  function ConcurrentViewIdMaker() {
+    _classCallCheck(this, ConcurrentViewIdMaker);
+
+    this.sessionStorageKey = 'vcl-player-id';
+  }
+
+  /**
+   * main plugin component class
+   */
+
+  _createClass(ConcurrentViewIdMaker, [{
+    key: 'generate',
+    value: function generate(options) {
+
+      // user-made id
+      if (options.playerID) {
+        return options.playerID;
+      }
+
+      return this.generateBySessionStorage() || 'rdm-' + this.generateRandom();
+    }
+  }, {
+    key: 'generateRandom',
+    value: function generateRandom(len) {
+      return Math.random().toString((len || 30) + 2).substr(2);
+    }
+  }, {
+    key: 'generateBySessionStorage',
+    value: function generateBySessionStorage() {
+
+      if (!window.sessionStorage) {
+        return null;
+      }
+
+      var id = window.sessionStorage.getItem(this.sessionStorageKey);
+
+      if (!id) {
+        id = 'ssi-' + this.generateRandom();
+        window.sessionStorage.setItem(this.sessionStorageKey, id);
+      }
+
+      return id;
+    }
+  }]);
+
+  return ConcurrentViewIdMaker;
+})();
 
 var ConcurrentViewPlugin = (function () {
   function ConcurrentViewPlugin(options, player) {
@@ -34,6 +83,8 @@ var ConcurrentViewPlugin = (function () {
 
     this.options = options;
     this.player = player;
+
+    this.options.playerID = new ConcurrentViewIdMaker().generate(options);
   }
 
   /**
@@ -67,9 +118,23 @@ var ConcurrentViewPlugin = (function () {
           'Content-Type': 'application/json'
         }
       }, function (err, resp, body) {
-        cb(err ? err.message || err : null, body ? JSON.parse(body) : null);
+
+        var bodyJson = undefined;
+
+        try {
+          bodyJson = body ? JSON.parse(body) : { error: 'invalid body', body: body };
+        } catch (e) {
+          bodyJson = null;
+        }
+
+        cb(err ? err.message || err : null, bodyJson);
       });
     }
+
+    /**
+     * validates player access
+     * @param cb
+       */
   }, {
     key: 'validatePlay',
     value: function validatePlay(cb) {
@@ -258,21 +323,22 @@ var onPlayerReady = function onPlayerReady(player, options) {
 var concurrenceLimiter = function concurrenceLimiter(useroptions) {
   var _this4 = this;
 
-  var options = _videoJs2['default'].mergeOptions(defaults, useroptions);
-
-  _videoJs2['default'].log('concurrenceview plugin', options);
-
-  if (!options.accessurl || !options.updateurl || !options.disposeurl) {
-    _videoJs2['default'].log('concurrenceview: invalid urls', options);
-    return;
-  }
-
-  if (!options.interval || options.interval < 5) {
-    _videoJs2['default'].log('concurrenceview: invalid options', options);
-    return;
-  }
-
   this.ready(function () {
+
+    var options = _videoJs2['default'].mergeOptions(defaults, useroptions);
+
+    _videoJs2['default'].log('concurrenceview plugin', options);
+
+    if (!options.accessurl || !options.updateurl || !options.disposeurl) {
+      _videoJs2['default'].log('concurrenceview: invalid urls', options);
+      return;
+    }
+
+    if (!options.interval || options.interval < 5) {
+      _videoJs2['default'].log('concurrenceview: invalid options', options);
+      return;
+    }
+
     onPlayerReady(_this4, options);
   });
 };
@@ -281,7 +347,7 @@ var concurrenceLimiter = function concurrenceLimiter(useroptions) {
 _videoJs2['default'].plugin('concurrenceLimiter', concurrenceLimiter);
 
 // Include the version number.
-concurrenceLimiter.VERSION = '0.1.3';
+concurrenceLimiter.VERSION = '__VERSION__';
 
 exports['default'] = concurrenceLimiter;
 module.exports = exports['default'];
