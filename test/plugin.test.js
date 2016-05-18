@@ -47,7 +47,6 @@ QUnit.test('registers itself with video.js', function(assert) {
   );
 
   this.player.concurrenceLimiter({
-    playerID: Math.random().toString(32),
     accessurl: '/limiter/canplay',
     updateurl: '/limiter/playing',
     disposeurl: '/limiter/stop',
