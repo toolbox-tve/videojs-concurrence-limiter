@@ -52,6 +52,10 @@ class ConcurrentViewPlugin {
     );
   }
 
+  /**
+   * validates player access
+   * @param cb
+     */
   validatePlay(cb) {
 
     this.makeRequest(

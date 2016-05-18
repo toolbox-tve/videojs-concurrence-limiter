@@ -46,7 +46,13 @@ QUnit.test('registers itself with video.js', function(assert) {
     'videojs-concurrence-limiter plugin was registered'
   );
 
-  this.player.concurrenceLimiter();
+  this.player.concurrenceLimiter({
+    playerID: Math.random().toString(32),
+    accessurl: '/limiter/canplay',
+    updateurl: '/limiter/playing',
+    disposeurl: '/limiter/stop',
+    startPosition: 123
+  });
 
   // Tick the clock forward enough to trigger the player to be "ready".
   this.clock.tick(1);
