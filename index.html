@@ -13,14 +13,23 @@
   </video>
   <ul>
     <li><a href="/test/">Run unit tests in browser.</a></li>
-    
+
   </ul>
   <script src="/node_modules/video.js/dist/video.js"></script>
   <script src="/dist/videojs-concurrence-limiter.js"></script>
   <script>
     (function(window, videojs) {
+
       var player = window.player = videojs('videojs-concurrence-limiter-player');
-      player.concurrenceLimiter();
+
+      player.concurrenceLimiter({
+        playerID: Math.random().toString(32),
+        accessurl: '/limiter/canplay',
+        updateurl: '/limiter/playing',
+        disposeurl: '/limiter/stop',
+        startPosition: 123
+      });
+
     }(window, window.videojs));
   </script>
 </body>

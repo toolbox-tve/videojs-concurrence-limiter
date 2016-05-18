@@ -38,7 +38,16 @@ class ConcurrentViewPlugin {
         }
       },
       (err, resp, body) => {
-        cb(err ? err.message || err : null, body ? JSON.parse(body) : null);
+
+        let bodyJson;
+
+        try {
+          bodyJson = body ? JSON.parse(body) : {error: 'invalid body', body};
+        } catch (e) {
+          bodyJson = null;
+        }
+
+        cb(err ? err.message || err : null, bodyJson);
       }
     );
   }
@@ -245,21 +254,22 @@ const onPlayerReady = (player, options) => {
  */
 const concurrenceLimiter = function(useroptions) {
 
-  let options = videojs.mergeOptions(defaults, useroptions);
-
-  videojs.log('concurrenceview plugin', options);
-
-  if (!options.accessurl || !options.updateurl || !options.disposeurl) {
-    videojs.log('concurrenceview: invalid urls', options);
-    return;
-  }
-
-  if (!options.interval || options.interval < 5) {
-    videojs.log('concurrenceview: invalid options', options);
-    return;
-  }
-
   this.ready(() => {
+
+    let options = videojs.mergeOptions(defaults, useroptions);
+
+    videojs.log('concurrenceview plugin', options);
+
+    if (!options.accessurl || !options.updateurl || !options.disposeurl) {
+      videojs.log('concurrenceview: invalid urls', options);
+      return;
+    }
+
+    if (!options.interval || options.interval < 5) {
+      videojs.log('concurrenceview: invalid options', options);
+      return;
+    }
+
     onPlayerReady(this, options);
   });
 };
@@ -268,6 +278,6 @@ const concurrenceLimiter = function(useroptions) {
 videojs.plugin('concurrenceLimiter', concurrenceLimiter);
 
 // Include the version number.
-concurrenceLimiter.VERSION = '0.1.3';
+concurrenceLimiter.VERSION = '__VERSION__';
 
 export default concurrenceLimiter;

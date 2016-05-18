@@ -69,7 +69,6 @@
     "preversion": "npm test",
     "version": "babel-node scripts/version.js",
     "postversion": "babel-node scripts/postversion.js",
-    "watch": "gulp",
     "prepublish": "npm run build"
   },
   "author": "ToolBox-tve",

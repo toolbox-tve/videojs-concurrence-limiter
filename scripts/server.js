@@ -2,11 +2,13 @@ import Promise from 'bluebird';
 import browserify from 'browserify';
 import budo from 'budo';
 import fs from 'fs';
+import url from 'url';
 import glob from 'glob';
 import mkdirp from 'mkdirp';
 import sass from 'node-sass';
 import path from 'path';
 import vjslangs from 'videojs-languages';
+import SimpleLimitServer from './SimpleLimitServer';
 
 /* eslint no-console: 0 */
 
@@ -68,10 +70,34 @@ mkdirp.sync('dist');
 
 // Start the server _after_ the initial bundling is done.
 Promise.all([bundle('js'), bundle('tests')]).then(() => {
-  const server = budo({
-    port: 9999,
-    stream: process.stdout
-  }).on('reload', (f) => console.log('reloading %s', f || 'everything'));
+
+  let limitServ = new SimpleLimitServer();
+
+  const server = budo(
+    {
+      port: 9999,
+      stream: process.stdout,
+      middleware: (req, res, next) => {
+
+        let urlObj = url.parse(req.url);
+
+        if (urlObj.pathname.indexOf('/limiter/') !== -1) {
+
+          try {
+            limitServ.handleRequest(urlObj, req, res, next);
+          } catch (e) {
+            res.end('Error: ' + e.message);
+            console.log(e);
+          }
+
+        } else {
+          // fall through to other routes
+          next();
+        }
+
+      }
+    }
+  ).on('reload', (f) => console.log('reloading %s', f || 'everything'));
 
   /**
    * A collection of functions which are mapped to strings that are used to
