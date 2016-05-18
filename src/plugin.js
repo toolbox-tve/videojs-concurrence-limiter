@@ -11,6 +11,48 @@ const defaults = {
 };
 
 /**
+ * creates player ids
+ */
+class ConcurrentViewIdMaker {
+
+  constructor() {
+    this.sessionStorageKey = 'vcl-player-id';
+  }
+
+  generate(options) {
+
+    //user-made id
+    if(options.playerID) {
+      return options.playerID;
+    }
+
+    return this.generateBySessionStorage() || ('rdm-'+this.generateRandom());
+  }
+
+  generateRandom(len) {
+    return Math.random().toString( (len || 30) + 2 ).substr(2);
+  }
+
+
+  generateBySessionStorage() {
+
+    if (!window.sessionStorage) {
+      return null;
+    }
+
+    let id = window.sessionStorage.getItem(this.sessionStorageKey);
+
+    if (!id) {
+      id = 'ssi-'+this.generateRandom();
+      window.sessionStorage.setItem(this.sessionStorageKey, id);
+    }
+
+    return id;
+  }
+
+}
+
+/**
  * main plugin component class
  */
 class ConcurrentViewPlugin {
@@ -18,6 +60,8 @@ class ConcurrentViewPlugin {
   constructor(options, player) {
     this.options = options;
     this.player = player;
+
+    this.options.playerID = new ConcurrentViewIdMaker().generate(options);
   }
 
   /**

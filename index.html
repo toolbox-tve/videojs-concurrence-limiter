@@ -23,7 +23,6 @@
       var player = window.player = videojs('videojs-concurrence-limiter-player');
 
       player.concurrenceLimiter({
-        playerID: Math.random().toString(32),
         accessurl: '/limiter/canplay',
         updateurl: '/limiter/playing',
         disposeurl: '/limiter/stop',
