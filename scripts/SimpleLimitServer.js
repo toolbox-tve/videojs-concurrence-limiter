@@ -167,7 +167,8 @@ class SimpleLimitServer {
     case '/limiter/stop':
       response = this.stop(params);
       break;
-
+      
+      // debug url
     case '/limiter/players':
       let keys = Object.keys(this.players);
 

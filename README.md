@@ -90,24 +90,52 @@ var player = videojs("myVideo",
     height: 240,
     plugins: {
         // videojs-concurrence-limiter plugin options
-        concurrence: {
+        concurrenceLimiter: {
         	// options here
         }
     }
 });
 ```
 ##### Available options:
-| Option | Type | Default | Description |
-| --- | --- | --- | --- |
-| `playerID` | string | `none` |  |
-| `accessurl` | string | `none` |  |
-| `updateurl` | string | `none` |  |
-| `disposeurl` | string | `none` |  |
-| `startPosition` | number | `none` |  |
+| Option | Required | Type | Default | Description |
+| --- | --- | --- | --- | --- |
+| interval | false | number | 10 | Plugin update interval, in seconds |
+| playerID | false | string | _null_ | Current player id, if null, the player generates one |
+| accessurl | true | string | `none` | Server url for access request |
+| updateurl | true | string | `none` | Server update url |
+| disposeurl | true | string | `none` | Server dispose/stop url |
+| startPosition | true | number | `none` | Player starting position for updates |
+  
+### Request & Response formats
+-----------
+Standar format:
 
+request:
+```json
+{
+  player: 'a plyaer id',
+  position: currentPlayerTime,
+  token: 'SomeHelpfulValidationTokenFromServer',
+  status: 'currentPlayerStatus'
+}
+```
+
+response:
+```json
+{
+  success: true|false,
+  player: 'a player id',
+  token: 'SomeHelpfulValidationTokenFromServer',
+  position: positionFromParams,
+  status: statusFromParams
+}
+```
+
+
+See SimpleLimitServer.js for more information and usage
 
 ### TODO
 --------
 
-- [ ] Complete Options in README.
+- [ ] Add Request/Response information.
 - [ ] Create unit test specs.
