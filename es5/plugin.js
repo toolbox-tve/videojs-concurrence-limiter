@@ -39,6 +39,12 @@ var ConcurrentViewIdMaker = (function () {
    * main plugin component class
    */
 
+  /**
+   * create id (if needed)
+   * @param options
+   * @returns {*}
+     */
+
   _createClass(ConcurrentViewIdMaker, [{
     key: 'generate',
     value: function generate(options) {
@@ -50,11 +56,22 @@ var ConcurrentViewIdMaker = (function () {
 
       return this.generateBySessionStorage() || 'rdm-' + this.generateRandom();
     }
+
+    /**
+     * random words
+     * @param len
+     * @returns {string}
+       */
   }, {
     key: 'generateRandom',
     value: function generateRandom(len) {
       return Math.random().toString((len || 30) + 2).substr(2);
     }
+
+    /**
+     * sessionStorage id
+     * @returns {null}
+       */
   }, {
     key: 'generateBySessionStorage',
     value: function generateBySessionStorage() {
@@ -161,6 +178,14 @@ var ConcurrentViewPlugin = (function () {
         }
       });
     }
+
+    /**
+     * disposes current player instance
+     *
+     * @param code
+     * @param error
+     * @param reason
+       */
   }, {
     key: 'blockPlayer',
     value: function blockPlayer(code, error, reason) {
@@ -179,6 +204,12 @@ var ConcurrentViewPlugin = (function () {
       this.player.pause();
       this.player.dispose();
     }
+
+    /**
+     * get last position
+     *
+     * @param info
+       */
   }, {
     key: 'recoverStatus',
     value: function recoverStatus(info) {
@@ -197,6 +228,11 @@ var ConcurrentViewPlugin = (function () {
 
     /* ************** */
 
+    /**
+     * creates a monitor interval
+     *
+     * @param ok
+       */
   }, {
     key: 'makeWatchdog',
     value: function makeWatchdog(ok) {
@@ -217,6 +253,7 @@ var ConcurrentViewPlugin = (function () {
 
       player.on('timeupdate', function (e) {
 
+        // waits until 'loadedmetadata' event is raised
         if (!loadedmetadata || !_this3.fistSent) {
           _this3.fistSent = true;
           return;
@@ -227,6 +264,7 @@ var ConcurrentViewPlugin = (function () {
 
       _videoJs2['default'].log('concurrence plugin: ok', ok);
 
+      // clear after dispose
       var cleanUp = function cleanUp() {
         _videoJs2['default'].log('concurrenceview: DISPOSE', options);
 
@@ -243,12 +281,13 @@ var ConcurrentViewPlugin = (function () {
         }
       };
 
+      // add hooks
       player.on('dispose', cleanUp);
-
       window.addEventListener('beforeunload', cleanUp);
 
       if (!watchdog) {
 
+        // real watchdog
         var wdf = function wdf() {
 
           player.trigger({
@@ -280,6 +319,8 @@ var ConcurrentViewPlugin = (function () {
         };
 
         watchdog = player.setInterval(wdf, options.interval * 1000);
+
+        // call & block
         wdf();
       }
     }

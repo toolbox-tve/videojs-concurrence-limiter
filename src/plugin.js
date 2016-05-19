@@ -144,7 +144,7 @@ class ConcurrentViewPlugin {
 
   /**
    * disposes current player instance
-   * 
+   *
    * @param code
    * @param error
    * @param reason
@@ -167,7 +167,8 @@ class ConcurrentViewPlugin {
   }
 
   /**
-   * get last position 
+   * get last position
+   *
    * @param info
      */
   recoverStatus(info) {
@@ -184,7 +185,8 @@ class ConcurrentViewPlugin {
   /* ************** */
 
   /**
-   * creates a monitor interval 
+   * creates a monitor interval
+   *
    * @param ok
      */
   makeWatchdog(ok) {
@@ -278,7 +280,7 @@ class ConcurrentViewPlugin {
       };
 
       watchdog = player.setInterval(wdf, options.interval * 1000);
-      
+
       // call & block
       wdf();
     }
