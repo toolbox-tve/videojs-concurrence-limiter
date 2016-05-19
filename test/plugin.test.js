@@ -46,6 +46,11 @@ QUnit.test('registers itself with video.js', function(assert) {
     'videojs-concurrence-limiter plugin was registered'
   );
 
+  sinon
+    .stub(videojs, 'xhr')
+    .yields(null, null, JSON.stringify({success: true}));
+
+
   this.player.concurrenceLimiter({
     accessurl: '/limiter/canplay',
     updateurl: '/limiter/playing',
