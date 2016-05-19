@@ -19,6 +19,11 @@ class ConcurrentViewIdMaker {
     this.sessionStorageKey = 'vcl-player-id';
   }
 
+  /**
+   * create id (if needed)
+   * @param options
+   * @returns {*}
+     */
   generate(options) {
 
     // user-made id
@@ -29,10 +34,19 @@ class ConcurrentViewIdMaker {
     return this.generateBySessionStorage() || ('rdm-' + this.generateRandom());
   }
 
+  /**
+   * random words
+   * @param len
+   * @returns {string}
+     */
   generateRandom(len) {
     return Math.random().toString((len || 30) + 2).substr(2);
   }
 
+  /**
+   * sessionStorage id
+   * @returns {null}
+     */
   generateBySessionStorage() {
 
     if (!window.sessionStorage) {
@@ -128,6 +142,13 @@ class ConcurrentViewPlugin {
 
   }
 
+  /**
+   * disposes current player instance
+   * 
+   * @param code
+   * @param error
+   * @param reason
+     */
   blockPlayer(code, error, reason) {
     code = code || 'error';
     reason = reason || 'Has alcanzado la cantidad maxima de players activos.';
@@ -145,6 +166,10 @@ class ConcurrentViewPlugin {
     this.player.dispose();
   }
 
+  /**
+   * get last position 
+   * @param info
+     */
   recoverStatus(info) {
     if (!info.position) {
       return;
@@ -158,6 +183,10 @@ class ConcurrentViewPlugin {
 
   /* ************** */
 
+  /**
+   * creates a monitor interval 
+   * @param ok
+     */
   makeWatchdog(ok) {
 
     let watchdog = null;
@@ -173,6 +202,7 @@ class ConcurrentViewPlugin {
 
     player.on('timeupdate', (e) => {
 
+      // waits until 'loadedmetadata' event is raised
       if (!loadedmetadata || !this.fistSent) {
         this.fistSent = true;
         return;
@@ -183,6 +213,7 @@ class ConcurrentViewPlugin {
 
     videojs.log('concurrence plugin: ok', ok);
 
+    // clear after dispose
     let cleanUp = () => {
       videojs.log('concurrenceview: DISPOSE', options);
 
@@ -204,12 +235,13 @@ class ConcurrentViewPlugin {
       }
     };
 
+    // add hooks
     player.on('dispose', cleanUp);
-
     window.addEventListener('beforeunload', cleanUp);
 
     if (!watchdog) {
 
+      // real watchdog
       let wdf = () => {
 
         player.trigger({
@@ -246,6 +278,8 @@ class ConcurrentViewPlugin {
       };
 
       watchdog = player.setInterval(wdf, options.interval * 1000);
+      
+      // call & block
       wdf();
     }
 
