@@ -21,7 +21,8 @@ var defaults = {
   updateurl: null,
   disposeurl: null,
   playerID: null,
-  startPosition: 0
+  startPosition: 0,
+  maxUpdateFails: 1
 };
 
 /**
@@ -286,42 +287,64 @@ var ConcurrentViewPlugin = (function () {
       window.addEventListener('beforeunload', cleanUp);
 
       if (!watchdog) {
+        (function () {
 
-        // real watchdog
-        var wdf = function wdf() {
+          var pendingRequest = false;
+          var failedRequest = 0;
 
-          player.trigger({
-            type: 'avplayerupdate',
-            playerID: playerID
-          });
+          // real watchdog
+          var wdf = function wdf() {
 
-          _this3.makeRequest(options.updateurl, {
-            player: playerID,
-            token: playerToken,
-            position: lasTime,
-            status: player.paused() ? 'paused' : 'playing'
-          }, function (error, response) {
+            player.trigger({
+              type: 'avplayerupdate',
+              playerID: playerID
+            });
 
-            if (error) {
-              _videoJs2['default'].log('concurrenceview: update api error', error);
-              _this3.blockPlayer(player, 'authapifail', { msg: error });
+            //avoid conflicts
+            if (pendingRequest) {
               return;
             }
+            pendingRequest = true;
 
-            if (response && response.success) {
-              playerID = response.player || playerID;
-              playerToken = response.token || playerToken;
-            } else {
-              _videoJs2['default'].log(new Error('Player Auth error'), response);
-              _this3.blockPlayer(player, 'noauth', response);
-            }
-          });
-        };
+            _this3.makeRequest(options.updateurl, {
+              player: playerID,
+              token: playerToken,
+              position: lasTime,
+              status: player.paused() ? 'paused' : 'playing'
+            }, function (error, response) {
 
-        watchdog = player.setInterval(wdf, options.interval * 1000);
+              pendingRequest = false;
 
-        // call & block
-        wdf();
+              if (error) {
+
+                //alow some error level
+                if (failedRequest >= options.maxUpdateFails) {
+                  _videoJs2['default'].log('concurrenceview: update api error', error);
+                  _this3.blockPlayer(player, 'authapifail', { msg: error });
+                }
+
+                failedRequest++;
+
+                return;
+              }
+
+              failedRequest = 0;
+
+              if (response && response.success) {
+                playerID = response.player || playerID;
+                playerToken = response.token || playerToken;
+              } else {
+                _videoJs2['default'].log(new Error('Player Auth error'), response);
+                _this3.blockPlayer(player, 'noauth', response);
+              }
+            });
+          };
+
+          watchdog = player.setInterval(wdf, options.interval * 1000);
+
+          // call & block
+          wdf();
+        })();
       }
     }
   }]);

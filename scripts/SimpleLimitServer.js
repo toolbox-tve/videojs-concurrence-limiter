@@ -184,6 +184,14 @@ class SimpleLimitServer {
       return;
     }
 
+    /* timeout test
+    if(url.pathname !== '/limiter/playing') {
+      return setTimeout(()  => this.sendJsonReponse(res, 200, response), 2 * 1000);
+    }
+
+    setTimeout(()  => this.sendJsonReponse(res, 200, response), 17 * 1000);
+    */
+
     this.sendJsonReponse(res, 200, response);
   }
 
