@@ -22,7 +22,8 @@ var defaults = {
   disposeurl: null,
   playerID: null,
   startPosition: 0,
-  maxUpdateFails: 1
+  maxUpdateFails: 1,
+  requestTimeoutInMillis: 15 * 1000
 };
 
 /**
@@ -134,7 +135,8 @@ var ConcurrentViewPlugin = (function () {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
-        }
+        },
+        timeout: this.options.requestTimeoutInMillis
       }, function (err, resp, body) {
 
         var bodyJson = undefined;
@@ -300,7 +302,7 @@ var ConcurrentViewPlugin = (function () {
               playerID: playerID
             });
 
-            //avoid conflicts
+            // avoid conflicts
             if (pendingRequest) {
               return;
             }
@@ -317,7 +319,7 @@ var ConcurrentViewPlugin = (function () {
 
               if (error) {
 
-                //alow some error level
+                // allow some error level
                 if (failedRequest >= options.maxUpdateFails) {
                   _videoJs2['default'].log('concurrenceview: update api error', error);
                   _this3.blockPlayer(player, 'authapifail', { msg: error });

@@ -257,8 +257,8 @@ class ConcurrentViewPlugin {
           playerID
         });
 
-        //avoid conflicts
-        if(pendingRequest) {
+        // avoid conflicts
+        if (pendingRequest) {
           return;
         }
         pendingRequest = true;
@@ -277,8 +277,8 @@ class ConcurrentViewPlugin {
 
             if (error) {
 
-              //alow some error level
-              if(failedRequest >= options.maxUpdateFails) {
+              // allow some error level
+              if (failedRequest >= options.maxUpdateFails) {
                 videojs.log('concurrenceview: update api error', error);
                 this.blockPlayer(player, 'authapifail', {msg: error});
               }
