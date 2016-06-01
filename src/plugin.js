@@ -7,7 +7,9 @@ const defaults = {
   updateurl: null,
   disposeurl: null,
   playerID: null,
-  startPosition: 0
+  startPosition: 0,
+  maxUpdateFails: 1,
+  requestTimeoutInMillis: 15 * 1000
 };
 
 /**
@@ -92,7 +94,8 @@ class ConcurrentViewPlugin {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
-        }
+        },
+        timeout: this.options.requestTimeoutInMillis
       },
       (err, resp, body) => {
 
@@ -243,6 +246,9 @@ class ConcurrentViewPlugin {
 
     if (!watchdog) {
 
+      let pendingRequest = false;
+      let failedRequest = 0;
+
       // real watchdog
       let wdf = () => {
 
@@ -250,6 +256,12 @@ class ConcurrentViewPlugin {
           type: 'avplayerupdate',
           playerID
         });
+
+        //avoid conflicts
+        if(pendingRequest) {
+          return;
+        }
+        pendingRequest = true;
 
         this.makeRequest(
           options.updateurl,
@@ -261,11 +273,22 @@ class ConcurrentViewPlugin {
           },
           (error, response) => {
 
+            pendingRequest = false;
+
             if (error) {
-              videojs.log('concurrenceview: update api error', error);
-              this.blockPlayer(player, 'authapifail', {msg: error});
+
+              //alow some error level
+              if(failedRequest >= options.maxUpdateFails) {
+                videojs.log('concurrenceview: update api error', error);
+                this.blockPlayer(player, 'authapifail', {msg: error});
+              }
+
+              failedRequest++;
+
               return;
             }
+
+            failedRequest = 0;
 
             if (response && response.success) {
               playerID = response.player || playerID;

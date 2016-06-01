@@ -167,7 +167,7 @@ class SimpleLimitServer {
     case '/limiter/stop':
       response = this.stop(params);
       break;
-      
+
       // debug url
     case '/limiter/players':
       let keys = Object.keys(this.players);
@@ -183,6 +183,14 @@ class SimpleLimitServer {
       next();
       return;
     }
+
+    /* timeout test
+    if(url.pathname !== '/limiter/playing') {
+      return setTimeout(()  => this.sendJsonReponse(res, 200, response), 2 * 1000);
+    }
+
+    setTimeout(()  => this.sendJsonReponse(res, 200, response), 17 * 1000);
+    */
 
     this.sendJsonReponse(res, 200, response);
   }

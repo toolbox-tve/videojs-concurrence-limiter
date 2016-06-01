@@ -105,6 +105,8 @@ var player = videojs("myVideo",
 | updateurl | true | string | `none` | Server update url |
 | disposeurl | true | string | `none` | Server dispose/stop url |
 | startPosition | true | number | `none` | Player starting position for updates |
+| maxUpdateFails | true | number | 1 | Max http failures for 'updateurl' before error event |
+| requestTimeoutInMillis | true | number | 15000 | Player http request timeouts |
   
 ### Request & Response formats
 -----------
