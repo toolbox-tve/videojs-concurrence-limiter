@@ -1,6 +1,6 @@
 /**
  * videojs-concurrence-limiter
- * @version 0.3.0
+ * @version 0.3.2
  * @copyright 2016 ToolBox-tve
  * @license Apache-2.0
  */
@@ -110,6 +110,7 @@ var ConcurrentViewPlugin = (function () {
 
     this.options = options;
     this.player = player;
+    this.eventsFlags = {};
 
     this.options.playerID = new ConcurrentViewIdMaker().generate(options);
   }
@@ -127,14 +128,27 @@ var ConcurrentViewPlugin = (function () {
    */
 
   /**
-   * xhr alias
-   *
-   * @param url
-   * @param data
-   * @param cb
-     */
+   * hook into player events right after player is ready to set flags for later checks
+   */
 
   _createClass(ConcurrentViewPlugin, [{
+    key: 'hookPlayerEvents',
+    value: function hookPlayerEvents() {
+      var _this = this;
+
+      this.player.on('loadedmetadata', function () {
+        return _this.eventsFlags.loadedmetadata = true;
+      });
+    }
+
+    /**
+     * xhr alias
+     *
+     * @param url
+     * @param data
+     * @param cb
+       */
+  }, {
     key: 'makeRequest',
     value: function makeRequest(url, data, cb) {
       _videoJs2['default'].xhr({
@@ -166,7 +180,7 @@ var ConcurrentViewPlugin = (function () {
   }, {
     key: 'validatePlay',
     value: function validatePlay(cb) {
-      var _this = this;
+      var _this2 = this;
 
       this.makeRequest(this.options.accessurl, {
         player: this.options.playerID
@@ -180,7 +194,7 @@ var ConcurrentViewPlugin = (function () {
         if (ok && ok.success) {
           cb(null, ok);
 
-          _this.player.trigger({
+          _this2.player.trigger({
             type: 'avplayercanplay',
             code: 1
           });
@@ -224,7 +238,7 @@ var ConcurrentViewPlugin = (function () {
   }, {
     key: 'recoverStatus',
     value: function recoverStatus(info) {
-      var _this2 = this;
+      var _this3 = this;
 
       if (!info.position) {
         return;
@@ -233,7 +247,7 @@ var ConcurrentViewPlugin = (function () {
       this.player.currentTime = info.position;
 
       this.player.on('loadedmetadata', function () {
-        return _this2.currentTime = info.position;
+        return _this3.currentTime = info.position;
       });
     }
 
@@ -247,7 +261,7 @@ var ConcurrentViewPlugin = (function () {
   }, {
     key: 'makeWatchdog',
     value: function makeWatchdog(ok) {
-      var _this3 = this;
+      var _this4 = this;
 
       var watchdog = null;
       var options = this.options;
@@ -256,17 +270,12 @@ var ConcurrentViewPlugin = (function () {
       var lasTime = options.startPosition || 0;
       var playerToken = null;
       var playerID = options.playerID;
-      var loadedmetadata = false;
-
-      player.on('loadedmetadata', function () {
-        return loadedmetadata = true;
-      });
 
       player.on('timeupdate', function (e) {
 
         // waits until 'loadedmetadata' event is raised
-        if (!loadedmetadata || !_this3.fistSent) {
-          _this3.fistSent = true;
+        if (!_this4.eventsFlags.loadedmetadata || !_this4.firstSent) {
+          _this4.firstSent = true;
           return;
         }
 
@@ -283,7 +292,7 @@ var ConcurrentViewPlugin = (function () {
           player.clearInterval(watchdog);
           watchdog = false;
 
-          _this3.makeRequest(options.disposeurl, {
+          _this4.makeRequest(options.disposeurl, {
             player: playerID,
             position: lasTime,
             token: playerToken,
@@ -316,7 +325,7 @@ var ConcurrentViewPlugin = (function () {
             }
             pendingRequest = true;
 
-            _this3.makeRequest(options.updateurl, {
+            _this4.makeRequest(options.updateurl, {
               player: playerID,
               token: playerToken,
               position: lasTime,
@@ -330,7 +339,7 @@ var ConcurrentViewPlugin = (function () {
                 // allow some error level
                 if (failedRequest >= options.maxUpdateFails) {
                   _videoJs2['default'].log('concurrenceview: update api error', error);
-                  _this3.blockPlayer(player, 'authapifail', { msg: error });
+                  _this4.blockPlayer(player, 'authapifail', { msg: error });
                 }
 
                 failedRequest++;
@@ -345,7 +354,7 @@ var ConcurrentViewPlugin = (function () {
                 playerToken = response.token || playerToken;
               } else {
                 _videoJs2['default'].log(new Error('Player Auth error'), response);
-                _this3.blockPlayer(player, 'noauth', response);
+                _this4.blockPlayer(player, 'noauth', response);
               }
             });
           };
@@ -367,6 +376,9 @@ var onPlayerReady = function onPlayerReady(player, options) {
 
   player._cvPlugin = new ConcurrentViewPlugin(options, player);
   var cvPlugin = player._cvPlugin;
+
+  // Hook into player events after player is ready to avoid missing first triggered events
+  cvPlugin.hookPlayerEvents();
 
   cvPlugin.validatePlay(function (error, ok) {
 
@@ -395,7 +407,7 @@ var onPlayerReady = function onPlayerReady(player, options) {
  *           An object of options left to the plugin author to define.
  */
 var concurrenceLimiter = function concurrenceLimiter(useroptions) {
-  var _this4 = this;
+  var _this5 = this;
 
   this.ready(function () {
 
@@ -413,7 +425,7 @@ var concurrenceLimiter = function concurrenceLimiter(useroptions) {
       return;
     }
 
-    onPlayerReady(_this4, options);
+    onPlayerReady(_this5, options);
   });
 };
 
@@ -421,7 +433,7 @@ var concurrenceLimiter = function concurrenceLimiter(useroptions) {
 _videoJs2['default'].plugin('concurrenceLimiter', concurrenceLimiter);
 
 // Include the version number.
-concurrenceLimiter.VERSION = '0.3.0';
+concurrenceLimiter.VERSION = '0.3.2';
 
 exports['default'] = concurrenceLimiter;
 module.exports = exports['default'];
