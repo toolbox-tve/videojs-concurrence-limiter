@@ -75,8 +75,16 @@ class ConcurrentViewPlugin {
   constructor(options, player) {
     this.options = options;
     this.player = player;
+    this.eventsFlags = {};
 
     this.options.playerID = new ConcurrentViewIdMaker().generate(options);
+  }
+
+  /**
+   * hook into player events right after player is ready to set flags for later checks
+   */
+  hookPlayerEvents() {
+    this.player.on('loadedmetadata', () => this.eventsFlags.loadedmetadata = true);
   }
 
   /**
@@ -201,15 +209,12 @@ class ConcurrentViewPlugin {
     let lasTime = options.startPosition || 0;
     let playerToken = null;
     let playerID = options.playerID;
-    let loadedmetadata = false;
-
-    player.on('loadedmetadata', () => loadedmetadata = true);
 
     player.on('timeupdate', (e) => {
 
       // waits until 'loadedmetadata' event is raised
-      if (!loadedmetadata || !this.fistSent) {
-        this.fistSent = true;
+      if (!this.eventsFlags.loadedmetadata || !this.firstSent) {
+        this.firstSent = true;
         return;
       }
 
@@ -328,6 +333,9 @@ const onPlayerReady = (player, options) => {
 
   player._cvPlugin = new ConcurrentViewPlugin(options, player);
   let cvPlugin = player._cvPlugin;
+
+  // Hook into player events after player is ready to avoid missing first triggered events
+  cvPlugin.hookPlayerEvents();
 
   cvPlugin.validatePlay((error, ok) => {
 
