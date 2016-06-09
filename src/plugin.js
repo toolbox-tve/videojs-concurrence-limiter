@@ -8,7 +8,7 @@ const defaults = {
   disposeurl: null,
   playerID: null,
   startPosition: 0,
-  maxUpdateFails: 1,
+  maxUpdateFails: 3,
   requestTimeoutInMillis: 15 * 1000
 };
 
@@ -76,6 +76,7 @@ class ConcurrentViewPlugin {
     this.options = options;
     this.player = player;
     this.eventsFlags = {};
+    this.updateFailsCount = 1;
 
     this.options.playerID = new ConcurrentViewIdMaker().generate(options);
   }
@@ -133,10 +134,25 @@ class ConcurrentViewPlugin {
       },
       (error, ok) => {
         if (error) {
-          videojs.log('concurrenceview: canplay api error', error);
-          cb(new Error(error), null);
+          videojs.log('concurrenceview: accessurl api error', error);
+
+          if (this.updateFailsCount >= this.options.maxUpdateFails) {
+            cb(new Error(error), null);
+
+          } else {
+
+            videojs.log('concurrenceview: accessurl retry',
+              this.updateFailsCount, this.options.maxUpdateFails);
+
+            this.updateFailsCount++;
+            // try again
+            this.player.setTimeout(() => this.validatePlay(cb), 200);
+          }
+
           return;
         }
+
+        this.updateFailsCount = 1;
 
         if (ok && ok.success) {
           cb(null, ok);
@@ -252,7 +268,6 @@ class ConcurrentViewPlugin {
     if (!watchdog) {
 
       let pendingRequest = false;
-      let failedRequest = 0;
 
       // real watchdog
       let wdf = () => {
@@ -281,19 +296,21 @@ class ConcurrentViewPlugin {
             pendingRequest = false;
 
             if (error) {
+              videojs.log('concurrenceview: updateurl api error', error);
 
               // allow some error level
-              if (failedRequest >= options.maxUpdateFails) {
-                videojs.log('concurrenceview: update api error', error);
+              if (this.updateFailsCount >= options.maxUpdateFails) {
                 this.blockPlayer(player, 'authapifail', {msg: error});
               }
 
-              failedRequest++;
+              videojs.log('concurrenceview: updateurl retry later', this.updateFailsCount, options.maxUpdateFails);
+
+              this.updateFailsCount++;
 
               return;
             }
 
-            failedRequest = 0;
+            this.updateFailsCount = 1;
 
             if (response && response.success) {
               playerID = response.player || playerID;

@@ -185,14 +185,15 @@ class SimpleLimitServer {
     }
 
     /* timeout test
-    if(url.pathname !== '/limiter/playing') {
+    if(url.pathname !== '/limiter/canplay') {
       return setTimeout(()  => this.sendJsonReponse(res, 200, response), 2 * 1000);
     }
 
     setTimeout(()  => this.sendJsonReponse(res, 200, response), 17 * 1000);
-    */
+    /*/
 
     this.sendJsonReponse(res, 200, response);
+    // */
   }
 
   /**

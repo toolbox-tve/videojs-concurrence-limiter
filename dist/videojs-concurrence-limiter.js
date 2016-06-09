@@ -1,6 +1,6 @@
 /**
  * videojs-concurrence-limiter
- * @version 0.3.2
+ * @version 0.3.3
  * @copyright 2016 ToolBox-tve
  * @license Apache-2.0
  */
@@ -30,7 +30,7 @@ var defaults = {
   disposeurl: null,
   playerID: null,
   startPosition: 0,
-  maxUpdateFails: 1,
+  maxUpdateFails: 3,
   requestTimeoutInMillis: 15 * 1000
 };
 
@@ -111,6 +111,7 @@ var ConcurrentViewPlugin = (function () {
     this.options = options;
     this.player = player;
     this.eventsFlags = {};
+    this.updateFailsCount = 1;
 
     this.options.playerID = new ConcurrentViewIdMaker().generate(options);
   }
@@ -186,10 +187,25 @@ var ConcurrentViewPlugin = (function () {
         player: this.options.playerID
       }, function (error, ok) {
         if (error) {
-          _videoJs2['default'].log('concurrenceview: canplay api error', error);
-          cb(new Error(error), null);
+          _videoJs2['default'].log('concurrenceview: accessurl api error', error);
+
+          if (_this2.updateFailsCount >= _this2.options.maxUpdateFails) {
+            cb(new Error(error), null);
+          } else {
+
+            _videoJs2['default'].log('concurrenceview: accessurl retry', _this2.updateFailsCount, _this2.options.maxUpdateFails);
+
+            _this2.updateFailsCount++;
+            // try again
+            _this2.player.setTimeout(function () {
+              return _this2.validatePlay(cb);
+            }, 200);
+          }
+
           return;
         }
+
+        _this2.updateFailsCount = 1;
 
         if (ok && ok.success) {
           cb(null, ok);
@@ -309,7 +325,6 @@ var ConcurrentViewPlugin = (function () {
         (function () {
 
           var pendingRequest = false;
-          var failedRequest = 0;
 
           // real watchdog
           var wdf = function wdf() {
@@ -335,19 +350,21 @@ var ConcurrentViewPlugin = (function () {
               pendingRequest = false;
 
               if (error) {
+                _videoJs2['default'].log('concurrenceview: updateurl api error', error);
 
                 // allow some error level
-                if (failedRequest >= options.maxUpdateFails) {
-                  _videoJs2['default'].log('concurrenceview: update api error', error);
+                if (_this4.updateFailsCount >= options.maxUpdateFails) {
                   _this4.blockPlayer(player, 'authapifail', { msg: error });
                 }
 
-                failedRequest++;
+                _videoJs2['default'].log('concurrenceview: updateurl retry later', _this4.updateFailsCount, options.maxUpdateFails);
+
+                _this4.updateFailsCount++;
 
                 return;
               }
 
-              failedRequest = 0;
+              _this4.updateFailsCount = 1;
 
               if (response && response.success) {
                 playerID = response.player || playerID;
@@ -433,7 +450,7 @@ var concurrenceLimiter = function concurrenceLimiter(useroptions) {
 _videoJs2['default'].plugin('concurrenceLimiter', concurrenceLimiter);
 
 // Include the version number.
-concurrenceLimiter.VERSION = '0.3.2';
+concurrenceLimiter.VERSION = '0.3.3';
 
 exports['default'] = concurrenceLimiter;
 module.exports = exports['default'];
