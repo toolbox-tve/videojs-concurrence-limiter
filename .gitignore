@@ -1,3 +1,7 @@
+# Binaries
+dist
+es5
+
 # Logs
 logs
 *.log
