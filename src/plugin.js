@@ -1,4 +1,5 @@
 import videojs from 'video.js';
+import merge from 'deepmerge';
 
 // Default options for the plugin.
 const defaults = {
@@ -9,7 +10,10 @@ const defaults = {
   playerID: null,
   startPosition: 0,
   maxUpdateFails: 3,
-  requestTimeoutInMillis: 15 * 1000
+  request: {
+    timeout: 15 * 1000,
+    headers: {}
+  }
 };
 
 /**
@@ -96,16 +100,19 @@ class ConcurrentViewPlugin {
    * @param cb
      */
   makeRequest(url, data, cb) {
+    let requestConfig = {
+      body: data ? JSON.stringify(data) : '{}',
+      url,
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    };
+
+    requestConfig = merge(requestConfig, this.options.request);
+
     videojs.xhr(
-      {
-        body: data ? JSON.stringify(data) : '{}',
-        url,
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        timeout: this.options.requestTimeoutInMillis
-      },
+      requestConfig,
       (err, resp, body) => {
 
         let bodyJson;
@@ -303,7 +310,8 @@ class ConcurrentViewPlugin {
                 this.blockPlayer(player, 'authapifail', {msg: error});
               }
 
-              videojs.log('concurrenceview: updateurl retry later', this.updateFailsCount, options.maxUpdateFails);
+              videojs.log('concurrenceview: updateurl retry later',
+                this.updateFailsCount, options.maxUpdateFails);
 
               this.updateFailsCount++;
 

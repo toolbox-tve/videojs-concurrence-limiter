@@ -24,6 +24,7 @@
     "browserify-shim": "^3.8.12",
     "browserify-versionify": "^1.0.6",
     "budo": "^8.0.4",
+    "deepmerge": "^0.2.10",
     "eslint": "^2.9.0",
     "glob": "^6.0.3",
     "global": "^4.3.0",
