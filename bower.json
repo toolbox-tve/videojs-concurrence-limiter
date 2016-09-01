@@ -1,0 +1,16 @@
+{
+  "name": "videojs-concurrence-limiter",
+  "description": "A Video.js plugin for concurrency control on played contents",
+  "main": "dist/videojs-concurrence-limiter.js",
+  "authors": [
+    "Toolbox Digital SA"
+  ],
+  "license": "Apache-2.0",
+  "keywords": [
+    "player",
+    "video",
+    "videojs",
+    "videojs-plugin"
+  ],
+  "homepage": "https://github.com/toolbox-tve/videojs-concurrence-limiter"
+}
