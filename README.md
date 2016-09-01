@@ -91,7 +91,7 @@ var player = videojs("myVideo",
     plugins: {
         // videojs-concurrence-limiter plugin options
         concurrenceLimiter: {
-        	// options here
+          // options here
         }
     }
 });
@@ -106,8 +106,18 @@ var player = videojs("myVideo",
 | disposeurl | true | string | `none` | Server dispose/stop url |
 | startPosition | true | number | `none` | Player starting position for updates |
 | maxUpdateFails | true | number | 1 | Max http failures for 'updateurl' before error event |
-| requestTimeoutInMillis | true | number | 15000 | Player http request timeouts |
-  
+| request | false | object | [see below] | Player http requests configuration |
+
+##### Available options for ```request``` config:
+- Any given options will be deep-merged with the plugin defaults. Allowed configs can be found under https://www.npmjs.com/package/xhr.
+- Defaults options are:
+
+| Option | Value |
+| --- | --- |
+| timeout | ```15000``` |
+| method | ```'POST'``` |
+| headers | ```{ 'Content-Type': 'application/json' }``` |
+
 ### Request & Response formats
 -----------
 Standar format:
@@ -115,7 +125,7 @@ Standar format:
 request:
 ```json
 {
-  player: 'a plyaer id',
+  player: 'a player id',
   position: currentPlayerTime,
   token: 'SomeHelpfulValidationTokenFromServer',
   status: 'currentPlayerStatus'
