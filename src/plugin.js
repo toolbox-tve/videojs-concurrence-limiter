@@ -275,7 +275,7 @@ class ConcurrentViewPlugin {
     if (!watchdog) {
 
       let pendingRequest = false;
-
+      let eventsSent = [];
       // real watchdog
       let wdf = () => {
 
@@ -290,13 +290,52 @@ class ConcurrentViewPlugin {
         }
         pendingRequest = true;
 
+        //Events
+        let getEvent = function getEvent(player, position) {
+          const events = {
+            LOAD: 'Load',
+            START: 'Start',
+            PROGRESS: 'Progress',
+            FIRSTQUARTILE: 'FirstQuartile',
+            MIDPOINT: 'Midpoint',
+            THIRDQUARTILE: 'ThirdQuartile',
+            COMPLETE: 'Complete',
+            PERCENTAGE: {
+              FIRSTQUARTILE: 25,
+              MIDPOINT: 50,
+              THIRDQUARTILE: 75,
+              COMPLETE: 97
+            }
+          };
+
+          let duration = player.duration();
+          if (duration === 0 || parseInt(position) === 0) {
+            eventsSent.push(events.START);
+            return events.START;
+          }
+          let percentage = (position / duration) * 100;
+          let rtnEvent = events.PROGRESS;
+          if (!eventsSent.includes(events.FIRSTQUARTILE) && percentage >= events.PERCENTAGE.FIRSTQUARTILE) {
+            rtnEvent = events.FIRSTQUARTILE;
+          } else if (!eventsSent.includes(events.MIDPOINT) && percentage >= events.PERCENTAGE.MIDPOINT) {
+            rtnEvent = events.MIDPOINT;
+          } else if (!eventsSent.includes(events.THIRDQUARTILE) && percentage >= events.PERCENTAGE.THIRDQUARTILE) {
+            rtnEvent = events.THIRDQUARTILE;
+          } else if (!eventsSent.includes(events.COMPLETE) && percentage >= events.PERCENTAGE.COMPLETE) {
+            rtnEvent = events.COMPLETE;
+          }
+          eventsSent.push(rtnEvent);
+          return rtnEvent;
+        };
+
         this.makeRequest(
           options.updateurl,
           {
             player: playerID,
             token: playerToken,
             position: lasTime,
-            status: player.paused() ? 'paused' : 'playing'
+            status: player.paused() ? 'paused' : 'playing',
+            event: getEvent(player, lasTime)
           },
           (error, response) => {
 
