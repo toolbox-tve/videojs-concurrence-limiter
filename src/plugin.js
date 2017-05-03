@@ -17,6 +17,55 @@ const defaults = {
 };
 
 /**
+ * Events
+ *
+ */
+const EVENTS = {
+  LOAD: 'Load',
+  START: 'Start',
+  PROGRESS: 'Progress',
+  FIRSTQUARTILE: 'FirstQuartile',
+  MIDPOINT: 'Midpoint',
+  THIRDQUARTILE: 'ThirdQuartile',
+  COMPLETE: 'Complete'
+};
+const PERCENTAGE = {
+  FIRSTQUARTILE: 25,
+  MIDPOINT: 50,
+  THIRDQUARTILE: 75,
+  COMPLETE: 97
+};
+const eventsSent = [];
+
+function getEvent(player, position) {
+  const duration = player.duration();
+
+  if ((duration === 0 || parseInt(position, 0) === 0) &&
+    !eventsSent.includes(EVENTS.START)) {
+    eventsSent.push(EVENTS.START);
+    return EVENTS.START;
+  }
+  const percentage = (position / duration) * 100;
+  let rtnEvent = EVENTS.PROGRESS;
+
+  if (!eventsSent.includes(EVENTS.FIRSTQUARTILE) &&
+    percentage >= PERCENTAGE.FIRSTQUARTILE) {
+    rtnEvent = EVENTS.FIRSTQUARTILE;
+  } else if (!eventsSent.includes(EVENTS.MIDPOINT) &&
+    percentage >= PERCENTAGE.MIDPOINT) {
+    rtnEvent = EVENTS.MIDPOINT;
+  } else if (!eventsSent.includes(EVENTS.THIRDQUARTILE) &&
+    percentage >= PERCENTAGE.THIRDQUARTILE) {
+    rtnEvent = EVENTS.THIRDQUARTILE;
+  } else if (!eventsSent.includes(EVENTS.COMPLETE) &&
+    percentage >= PERCENTAGE.COMPLETE) {
+    rtnEvent = EVENTS.COMPLETE;
+  }
+  eventsSent.push(rtnEvent);
+  return rtnEvent;
+}
+
+/**
  * creates player ids
  */
 class ConcurrentViewIdMaker {
@@ -29,7 +78,7 @@ class ConcurrentViewIdMaker {
    * create id (if needed)
    * @param options
    * @returns {*}
-     */
+   */
   generate(options) {
 
     // user-made id
@@ -44,7 +93,7 @@ class ConcurrentViewIdMaker {
    * random words
    * @param len
    * @returns {string}
-     */
+   */
   generateRandom(len) {
     return Math.random().toString((len || 30) + 2).substr(2);
   }
@@ -52,7 +101,7 @@ class ConcurrentViewIdMaker {
   /**
    * sessionStorage id
    * @returns {null}
-     */
+   */
   generateBySessionStorage() {
 
     if (!window.sessionStorage) {
@@ -98,7 +147,7 @@ class ConcurrentViewPlugin {
    * @param url
    * @param data
    * @param cb
-     */
+   */
   makeRequest(url, data, cb) {
     let requestConfig = {
       body: data ? JSON.stringify(data) : '{}',
@@ -131,7 +180,7 @@ class ConcurrentViewPlugin {
   /**
    * validates player access
    * @param cb
-     */
+   */
   validatePlay(cb) {
 
     this.makeRequest(
@@ -182,7 +231,7 @@ class ConcurrentViewPlugin {
    * @param code
    * @param error
    * @param reason
-     */
+   */
   blockPlayer(code, error, reason) {
     code = code || 'error';
     reason = reason || 'Has alcanzado la cantidad maxima de players activos.';
@@ -204,7 +253,7 @@ class ConcurrentViewPlugin {
    * get last position
    *
    * @param info
-     */
+   */
   recoverStatus(info) {
     if (!info.position) {
       return;
@@ -222,7 +271,7 @@ class ConcurrentViewPlugin {
    * creates a monitor interval
    *
    * @param ok
-     */
+   */
   makeWatchdog(ok) {
 
     let watchdog = null;
@@ -262,7 +311,8 @@ class ConcurrentViewPlugin {
             token: playerToken,
             status: 'paused'
           },
-          () => {}
+          () => {
+          }
         );
 
       }
@@ -378,47 +428,6 @@ const onPlayerReady = (player, options) => {
   });
 
 };
-
-/***
- * Events
- *
- */
-  const EVENTS = {
-    LOAD: 'Load',
-    START: 'Start',
-    PROGRESS: 'Progress',
-    FIRSTQUARTILE: 'FirstQuartile',
-    MIDPOINT: 'Midpoint',
-    THIRDQUARTILE: 'ThirdQuartile',
-    COMPLETE: 'Complete'
-  },
-  PERCENTAGE = {
-      FIRSTQUARTILE: 25,
-      MIDPOINT: 50,
-      THIRDQUARTILE: 75,
-      COMPLETE: 97
-  }, eventsSent = [];
-
-function getEvent(player, position) {
-  const duration = player.duration();
-  if ((duration === 0 || parseInt(position) === 0) && !eventsSent.includes(EVENTS.START)) {
-    eventsSent.push(EVENTS.START);
-    return EVENTS.START;
-  }
-  const percentage = (position / duration) * 100;
-  let rtnEvent = EVENTS.PROGRESS;
-  if (!eventsSent.includes(EVENTS.FIRSTQUARTILE) && percentage >= PERCENTAGE.FIRSTQUARTILE) {
-    rtnEvent = EVENTS.FIRSTQUARTILE;
-  } else if (!eventsSent.includes(EVENTS.MIDPOINT) && percentage >= PERCENTAGE.MIDPOINT) {
-    rtnEvent = EVENTS.MIDPOINT;
-  } else if (!eventsSent.includes(EVENTS.THIRDQUARTILE) && percentage >= PERCENTAGE.THIRDQUARTILE) {
-    rtnEvent = EVENTS.THIRDQUARTILE;
-  } else if (!eventsSent.includes(EVENTS.COMPLETE) && percentage >= PERCENTAGE.COMPLETE) {
-    rtnEvent = EVENTS.COMPLETE;
-  }
-  eventsSent.push(rtnEvent);
-  return rtnEvent;
-}
 
 /**
  * A video.js plugin.
