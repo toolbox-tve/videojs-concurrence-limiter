@@ -275,7 +275,6 @@ class ConcurrentViewPlugin {
     if (!watchdog) {
 
       let pendingRequest = false;
-      let eventsSent = [];
       // real watchdog
       let wdf = () => {
 
@@ -289,44 +288,6 @@ class ConcurrentViewPlugin {
           return;
         }
         pendingRequest = true;
-
-        //Events
-        let getEvent = function getEvent(player, position) {
-          const events = {
-            LOAD: 'Load',
-            START: 'Start',
-            PROGRESS: 'Progress',
-            FIRSTQUARTILE: 'FirstQuartile',
-            MIDPOINT: 'Midpoint',
-            THIRDQUARTILE: 'ThirdQuartile',
-            COMPLETE: 'Complete',
-            PERCENTAGE: {
-              FIRSTQUARTILE: 25,
-              MIDPOINT: 50,
-              THIRDQUARTILE: 75,
-              COMPLETE: 97
-            }
-          };
-
-          let duration = player.duration();
-          if (duration === 0 || parseInt(position) === 0) {
-            eventsSent.push(events.START);
-            return events.START;
-          }
-          let percentage = (position / duration) * 100;
-          let rtnEvent = events.PROGRESS;
-          if (!eventsSent.includes(events.FIRSTQUARTILE) && percentage >= events.PERCENTAGE.FIRSTQUARTILE) {
-            rtnEvent = events.FIRSTQUARTILE;
-          } else if (!eventsSent.includes(events.MIDPOINT) && percentage >= events.PERCENTAGE.MIDPOINT) {
-            rtnEvent = events.MIDPOINT;
-          } else if (!eventsSent.includes(events.THIRDQUARTILE) && percentage >= events.PERCENTAGE.THIRDQUARTILE) {
-            rtnEvent = events.THIRDQUARTILE;
-          } else if (!eventsSent.includes(events.COMPLETE) && percentage >= events.PERCENTAGE.COMPLETE) {
-            rtnEvent = events.COMPLETE;
-          }
-          eventsSent.push(rtnEvent);
-          return rtnEvent;
-        };
 
         this.makeRequest(
           options.updateurl,
@@ -417,6 +378,47 @@ const onPlayerReady = (player, options) => {
   });
 
 };
+
+/***
+ * Events
+ *
+ */
+  const EVENTS = {
+    LOAD: 'Load',
+    START: 'Start',
+    PROGRESS: 'Progress',
+    FIRSTQUARTILE: 'FirstQuartile',
+    MIDPOINT: 'Midpoint',
+    THIRDQUARTILE: 'ThirdQuartile',
+    COMPLETE: 'Complete'
+  },
+  PERCENTAGE = {
+      FIRSTQUARTILE: 25,
+      MIDPOINT: 50,
+      THIRDQUARTILE: 75,
+      COMPLETE: 97
+  }, eventsSent = [];
+
+function getEvent(player, position) {
+  const duration = player.duration();
+  if ((duration === 0 || parseInt(position) === 0) && !eventsSent.includes(EVENTS.START)) {
+    eventsSent.push(EVENTS.START);
+    return EVENTS.START;
+  }
+  const percentage = (position / duration) * 100;
+  let rtnEvent = EVENTS.PROGRESS;
+  if (!eventsSent.includes(EVENTS.FIRSTQUARTILE) && percentage >= PERCENTAGE.FIRSTQUARTILE) {
+    rtnEvent = EVENTS.FIRSTQUARTILE;
+  } else if (!eventsSent.includes(EVENTS.MIDPOINT) && percentage >= PERCENTAGE.MIDPOINT) {
+    rtnEvent = EVENTS.MIDPOINT;
+  } else if (!eventsSent.includes(EVENTS.THIRDQUARTILE) && percentage >= PERCENTAGE.THIRDQUARTILE) {
+    rtnEvent = EVENTS.THIRDQUARTILE;
+  } else if (!eventsSent.includes(EVENTS.COMPLETE) && percentage >= PERCENTAGE.COMPLETE) {
+    rtnEvent = EVENTS.COMPLETE;
+  }
+  eventsSent.push(rtnEvent);
+  return rtnEvent;
+}
 
 /**
  * A video.js plugin.
