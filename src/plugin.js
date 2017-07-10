@@ -27,19 +27,20 @@ const EVENTS = {
   FIRSTQUARTILE: 'FirstQuartile',
   MIDPOINT: 'Midpoint',
   THIRDQUARTILE: 'ThirdQuartile',
-  COMPLETE: 'Complete'
+  COMPLETE: 'Complete',
+  PAUSE: 'Pause',
+  RESUME: 'Resume'
 };
 const PERCENTAGE = {
   FIRSTQUARTILE: 25,
   MIDPOINT: 50,
   THIRDQUARTILE: 75,
-  COMPLETE: 97
+  COMPLETE: 95
 };
 const eventsSent = [];
 
 function getEvent(player, position) {
   const duration = player.duration();
-
   if ((duration === 0 || parseInt(position, 0) === 0) &&
     !eventsSent.includes(EVENTS.START)) {
     eventsSent.push(EVENTS.START);
@@ -48,21 +49,29 @@ function getEvent(player, position) {
   const percentage = (position / duration) * 100;
   let rtnEvent = EVENTS.PROGRESS;
 
-  if (!eventsSent.includes(EVENTS.FIRSTQUARTILE) &&
-    percentage >= PERCENTAGE.FIRSTQUARTILE) {
-    rtnEvent = EVENTS.FIRSTQUARTILE;
-  } else if (!eventsSent.includes(EVENTS.MIDPOINT) &&
-    percentage >= PERCENTAGE.MIDPOINT) {
-    rtnEvent = EVENTS.MIDPOINT;
-  } else if (!eventsSent.includes(EVENTS.THIRDQUARTILE) &&
-    percentage >= PERCENTAGE.THIRDQUARTILE) {
-    rtnEvent = EVENTS.THIRDQUARTILE;
-  } else if (!eventsSent.includes(EVENTS.COMPLETE) &&
-    percentage >= PERCENTAGE.COMPLETE) {
+  if (percentage >= PERCENTAGE.COMPLETE) {
     rtnEvent = EVENTS.COMPLETE;
+  } else if (percentage >= PERCENTAGE.THIRDQUARTILE) {
+    rtnEvent = EVENTS.THIRDQUARTILE;
+  } else if (percentage >= PERCENTAGE.MIDPOINT) {
+    rtnEvent = EVENTS.MIDPOINT;
+  } else if (percentage >= PERCENTAGE.FIRSTQUARTILE) {
+    rtnEvent = EVENTS.FIRSTQUARTILE;
   }
+
+  if (eventsSent.includes(rtnEvent)) {
+    rtnEvent = EVENTS.PROGRESS;
+  }
+
   eventsSent.push(rtnEvent);
   return rtnEvent;
+}
+
+function getTimeSpent(start) {
+  if (!start) {
+    return null;
+  }
+  return Math.round((Date.now() - start) / 1000);
 }
 
 /**
@@ -132,6 +141,9 @@ class ConcurrentViewPlugin {
     this.updateFailsCount = 1;
 
     this.options.playerID = new ConcurrentViewIdMaker().generate(options);
+
+    this.playerToken = null;
+    this.startDate = null;
   }
 
   /**
@@ -139,6 +151,9 @@ class ConcurrentViewPlugin {
    */
   hookPlayerEvents() {
     this.player.on('loadedmetadata', () => this.eventsFlags.loadedmetadata = true);
+
+    this.player.on('pause', this.reportEvent.bind(this, this.player, EVENTS.PAUSE));
+    this.player.on('play', this.reportEvent.bind(this, this.player, EVENTS.RESUME));
   }
 
   /**
@@ -217,6 +232,11 @@ class ConcurrentViewPlugin {
             type: 'avplayercanplay',
             code: 1
           });
+
+          // Save the starting date if null
+          if (!this.startDate) {
+            this.startDate = Date.now();
+          }
         } else {
           cb(new Error('Player Auth error'), null);
         }
@@ -346,7 +366,8 @@ class ConcurrentViewPlugin {
             token: playerToken,
             position: lasTime,
             status: player.paused() ? 'paused' : 'playing',
-            event: getEvent(player, lasTime)
+            event: getEvent(player, lasTime),
+            timeSpent: getTimeSpent(this.startDate)
           },
           (error, response) => {
 
@@ -373,6 +394,7 @@ class ConcurrentViewPlugin {
             if (response && response.success) {
               playerID = response.player || playerID;
               playerToken = response.token || playerToken;
+              this.playerToken = playerToken;
 
             } else {
               videojs.log(new Error('Player Auth error'), response);
@@ -387,6 +409,24 @@ class ConcurrentViewPlugin {
       // call & block
       wdf();
     }
+
+  }
+
+  reportEvent(player, event) {
+    this.makeRequest(
+      this.options.updateurl,
+      {
+        player: this.options.playerID,
+        token: this.playerToken,
+        position: Math.round(player.currentTime() || 0),
+        status: player.paused() ? 'paused' : 'playing',
+        event: event,
+        timeSpent: getTimeSpent(this.startDate)
+      },
+      (error, response) => {
+
+      }
+    );
 
   }
 
