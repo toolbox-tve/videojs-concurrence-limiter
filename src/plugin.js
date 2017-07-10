@@ -38,7 +38,6 @@ const PERCENTAGE = {
   COMPLETE: 95
 };
 const eventsSent = [];
-let startDate = null;
 
 function getEvent(player, position) {
   const duration = player.duration();
@@ -66,6 +65,13 @@ function getEvent(player, position) {
 
   eventsSent.push(rtnEvent);
   return rtnEvent;
+}
+
+function getTimeSpent(start) {
+  if (!start) {
+    return null;
+  }
+  return Math.round((Date.now() - start) / 1000);
 }
 
 /**
@@ -137,6 +143,7 @@ class ConcurrentViewPlugin {
     this.options.playerID = new ConcurrentViewIdMaker().generate(options);
 
     this.playerToken = null;
+    this.startDate = null;
   }
 
   /**
@@ -225,6 +232,11 @@ class ConcurrentViewPlugin {
             type: 'avplayercanplay',
             code: 1
           });
+
+          // Save the starting date if null
+          if (!this.startDate) {
+            this.startDate = Date.now();
+          }
         } else {
           cb(new Error('Player Auth error'), null);
         }
@@ -354,7 +366,8 @@ class ConcurrentViewPlugin {
             token: playerToken,
             position: lasTime,
             status: player.paused() ? 'paused' : 'playing',
-            event: getEvent(player, lasTime)
+            event: getEvent(player, lasTime),
+            timeSpent: getTimeSpent(this.startDate)
           },
           (error, response) => {
 
@@ -407,7 +420,8 @@ class ConcurrentViewPlugin {
         token: this.playerToken,
         position: Math.round(player.currentTime() || 0),
         status: player.paused() ? 'paused' : 'playing',
-        event: event
+        event: event,
+        timeSpent: getTimeSpent(this.startDate)
       },
       (error, response) => {
 
