@@ -29,7 +29,8 @@ const EVENTS = {
   THIRDQUARTILE: 'ThirdQuartile',
   COMPLETE: 'Complete',
   PAUSE: 'Pause',
-  RESUME: 'Resume'
+  RESUME: 'Resume',
+  CLOSE: 'Close'
 };
 const PERCENTAGE = {
   FIRSTQUARTILE: 25,
@@ -154,6 +155,7 @@ class ConcurrentViewPlugin {
 
     this.player.on('pause', this.reportEvent.bind(this, this.player, EVENTS.PAUSE));
     this.player.on('play', this.reportEvent.bind(this, this.player, EVENTS.RESUME));
+    window.addEventListener('beforeunload', this.reportEvent.bind(this, this.player, EVENTS.CLOSE));
   }
 
   /**
