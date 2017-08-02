@@ -51,6 +51,6 @@ module.exports = function(config) {
     colors: true,
     autoWatch: false,
     singleRun: true,
-    concurrency: Infinity
+    concurrency: 1 //Infinity
   });
 };

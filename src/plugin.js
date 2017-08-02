@@ -42,6 +42,7 @@ const eventsSent = [];
 
 function getEvent(player, position) {
   const duration = player.duration();
+
   if ((duration === 0 || parseInt(position, 0) === 0) &&
     !eventsSent.includes(EVENTS.START)) {
     eventsSent.push(EVENTS.START);
@@ -155,7 +156,8 @@ class ConcurrentViewPlugin {
 
     this.player.on('pause', this.reportEvent.bind(this, this.player, EVENTS.PAUSE));
     this.player.on('play', this.reportEvent.bind(this, this.player, EVENTS.RESUME));
-    window.addEventListener('beforeunload', this.reportEvent.bind(this, this.player, EVENTS.CLOSE));
+    window.addEventListener('beforeunload', this.reportEvent.bind(this, this.player,
+      EVENTS.CLOSE));
   }
 
   /**
@@ -422,16 +424,12 @@ class ConcurrentViewPlugin {
         token: this.playerToken,
         position: Math.round(player.currentTime() || 0),
         status: player.paused() ? 'paused' : 'playing',
-        event: event,
+        event,
         timeSpent: getTimeSpent(this.startDate)
       },
-      (error, response) => {
-
-      }
+      () => {}
     );
-
   }
-
 }
 
 /**
