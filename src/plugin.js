@@ -51,14 +51,14 @@ function getEvent(player, position) {
   const percentage = (position / duration) * 100;
   let rtnEvent = EVENTS.PROGRESS;
 
-  if (percentage >= PERCENTAGE.COMPLETE) {
-    rtnEvent = EVENTS.COMPLETE;
-  } else if (percentage >= PERCENTAGE.THIRDQUARTILE) {
-    rtnEvent = EVENTS.THIRDQUARTILE;
-  } else if (percentage >= PERCENTAGE.MIDPOINT) {
-    rtnEvent = EVENTS.MIDPOINT;
-  } else if (percentage >= PERCENTAGE.FIRSTQUARTILE) {
+  if (percentage >= PERCENTAGE.FIRSTQUARTILE && !eventsSent.includes(EVENTS.FIRSTQUARTILE)) {
     rtnEvent = EVENTS.FIRSTQUARTILE;
+  } else if (percentage >= PERCENTAGE.MIDPOINT && !eventsSent.includes(EVENTS.MIDPOINT)) {
+    rtnEvent = EVENTS.MIDPOINT;
+  } else if (percentage >= PERCENTAGE.THIRDQUARTILE && !eventsSent.includes(EVENTS.THIRDQUARTILE)) {
+    rtnEvent = EVENTS.THIRDQUARTILE;
+  } else if (percentage >= PERCENTAGE.COMPLETE && !eventsSent.includes(EVENTS.COMPLETE)) {
+    rtnEvent = EVENTS.COMPLETE;
   }
 
   if (eventsSent.includes(rtnEvent)) {

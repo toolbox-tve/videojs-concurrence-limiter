@@ -1,11 +1,10 @@
-CHANGELOG
-=========
+# CHANGELOG
 
-## HEAD (Unreleased)
-_(none)_
+## 0.4.6 (2017-08-11)
 
---------------------
-## 0.4.5 (2017-04-26)
+* Send QUARTILE if skipped
+
+## 0.4.5 (2017-06-26)
 
 * Evento en watchdog (CLOSE) para Tracking
 
