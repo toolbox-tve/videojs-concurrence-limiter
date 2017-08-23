@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 0.4.7 (2017-08-23)
+
+* Removed all events except Progress
+
 ## 0.4.6 (2017-08-11)
 
 * Send QUARTILE if skipped

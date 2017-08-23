@@ -16,59 +16,6 @@ const defaults = {
   }
 };
 
-/**
- * Events
- *
- */
-const EVENTS = {
-  LOAD: 'Load',
-  START: 'Start',
-  PROGRESS: 'Progress',
-  FIRSTQUARTILE: 'FirstQuartile',
-  MIDPOINT: 'Midpoint',
-  THIRDQUARTILE: 'ThirdQuartile',
-  COMPLETE: 'Complete',
-  PAUSE: 'Pause',
-  RESUME: 'Resume',
-  CLOSE: 'Close'
-};
-const PERCENTAGE = {
-  FIRSTQUARTILE: 25,
-  MIDPOINT: 50,
-  THIRDQUARTILE: 75,
-  COMPLETE: 95
-};
-const eventsSent = [];
-
-function getEvent(player, position) {
-  const duration = player.duration();
-
-  if ((duration === 0 || parseInt(position, 0) === 0) &&
-    !eventsSent.includes(EVENTS.START)) {
-    eventsSent.push(EVENTS.START);
-    return EVENTS.START;
-  }
-  const percentage = (position / duration) * 100;
-  let rtnEvent = EVENTS.PROGRESS;
-
-  if (percentage >= PERCENTAGE.FIRSTQUARTILE && !eventsSent.includes(EVENTS.FIRSTQUARTILE)) {
-    rtnEvent = EVENTS.FIRSTQUARTILE;
-  } else if (percentage >= PERCENTAGE.MIDPOINT && !eventsSent.includes(EVENTS.MIDPOINT)) {
-    rtnEvent = EVENTS.MIDPOINT;
-  } else if (percentage >= PERCENTAGE.THIRDQUARTILE && !eventsSent.includes(EVENTS.THIRDQUARTILE)) {
-    rtnEvent = EVENTS.THIRDQUARTILE;
-  } else if (percentage >= PERCENTAGE.COMPLETE && !eventsSent.includes(EVENTS.COMPLETE)) {
-    rtnEvent = EVENTS.COMPLETE;
-  }
-
-  if (eventsSent.includes(rtnEvent)) {
-    rtnEvent = EVENTS.PROGRESS;
-  }
-
-  eventsSent.push(rtnEvent);
-  return rtnEvent;
-}
-
 function getTimeSpent(start) {
   if (!start) {
     return null;
@@ -153,11 +100,6 @@ class ConcurrentViewPlugin {
    */
   hookPlayerEvents() {
     this.player.on('loadedmetadata', () => this.eventsFlags.loadedmetadata = true);
-
-    this.player.on('pause', this.reportEvent.bind(this, this.player, EVENTS.PAUSE));
-    this.player.on('play', this.reportEvent.bind(this, this.player, EVENTS.RESUME));
-    window.addEventListener('beforeunload', this.reportEvent.bind(this, this.player,
-      EVENTS.CLOSE));
   }
 
   /**
@@ -370,7 +312,7 @@ class ConcurrentViewPlugin {
             token: playerToken,
             position: lasTime,
             status: player.paused() ? 'paused' : 'playing',
-            event: getEvent(player, lasTime),
+            event: 'Progress',
             timeSpent: getTimeSpent(this.startDate)
           },
           (error, response) => {
@@ -413,22 +355,6 @@ class ConcurrentViewPlugin {
       // call & block
       wdf();
     }
-
-  }
-
-  reportEvent(player, event) {
-    this.makeRequest(
-      this.options.updateurl,
-      {
-        player: this.options.playerID,
-        token: this.playerToken,
-        position: Math.round(player.currentTime() || 0),
-        status: player.paused() ? 'paused' : 'playing',
-        event,
-        timeSpent: getTimeSpent(this.startDate)
-      },
-      () => {}
-    );
   }
 }
 
