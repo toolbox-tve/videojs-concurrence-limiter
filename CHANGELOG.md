@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 0.4.8 (2017-08-24)
+
+* Added option showAlert (default: true)
+* Added option errorMsg (default: Bloqueado por límite de concurrencia.)
+
 ## 0.4.7 (2017-08-23)
 
 * Removed all events except Progress

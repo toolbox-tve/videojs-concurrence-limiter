@@ -13,7 +13,9 @@ const defaults = {
   request: {
     timeout: 15 * 1000,
     headers: {}
-  }
+  },
+  showAlert: true,
+  errorMsg: 'Bloqueado por límite de concurrencia.'
 };
 
 function getTimeSpent(start) {
@@ -175,7 +177,7 @@ class ConcurrentViewPlugin {
           cb(null, ok);
 
           this.player.trigger({
-            type: 'avplayercanplay',
+            type: 'tbxplayercanplay',
             code: 1
           });
 
@@ -205,14 +207,20 @@ class ConcurrentViewPlugin {
     videojs.log('concurrenceview: stop player - ', reason);
 
     this.player.trigger({
-      type: 'avplayerbloked',
+      type: 'tbxplayerblocked',
       code,
       reason,
       error
     });
-
+    
     this.player.pause();
     this.player.dispose();
+
+    if (this.options.showAlert) {
+      setTimeout(() => {
+	      alert(this.options.errorMsg);
+      }, 0);
+    }
   }
 
   /**
@@ -295,7 +303,7 @@ class ConcurrentViewPlugin {
       let wdf = () => {
 
         player.trigger({
-          type: 'avplayerupdate',
+          type: 'tbxplayerupdate',
           playerID
         });
 
