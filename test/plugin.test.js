@@ -19,7 +19,7 @@ QUnit.test('the environment is sane', function(assert) {
 QUnit.module('videojs-concurrence-limiter', {
 
   beforeEach() {
-    // TODO: before() no esta siendo llamado
+    // before() no esta siendo llamado
     if (!videojsXhrStub) {
       videojsXhrStub = sinon
         .stub(videojs, 'xhr')

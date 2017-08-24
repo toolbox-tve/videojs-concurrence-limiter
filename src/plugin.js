@@ -13,8 +13,17 @@ const defaults = {
   request: {
     timeout: 15 * 1000,
     headers: {}
-  }
+  },
+  showAlert: true,
+  errorMsg: 'Bloqueado por límite de concurrencia.'
 };
+
+function getTimeSpent(start) {
+  if (!start) {
+    return null;
+  }
+  return Math.round((Date.now() - start) / 1000);
+}
 
 /**
  * creates player ids
@@ -29,7 +38,7 @@ class ConcurrentViewIdMaker {
    * create id (if needed)
    * @param options
    * @returns {*}
-     */
+   */
   generate(options) {
 
     // user-made id
@@ -44,7 +53,7 @@ class ConcurrentViewIdMaker {
    * random words
    * @param len
    * @returns {string}
-     */
+   */
   generateRandom(len) {
     return Math.random().toString((len || 30) + 2).substr(2);
   }
@@ -52,7 +61,7 @@ class ConcurrentViewIdMaker {
   /**
    * sessionStorage id
    * @returns {null}
-     */
+   */
   generateBySessionStorage() {
 
     if (!window.sessionStorage) {
@@ -83,6 +92,9 @@ class ConcurrentViewPlugin {
     this.updateFailsCount = 1;
 
     this.options.playerID = new ConcurrentViewIdMaker().generate(options);
+
+    this.playerToken = null;
+    this.startDate = null;
   }
 
   /**
@@ -98,7 +110,7 @@ class ConcurrentViewPlugin {
    * @param url
    * @param data
    * @param cb
-     */
+   */
   makeRequest(url, data, cb) {
     let requestConfig = {
       body: data ? JSON.stringify(data) : '{}',
@@ -131,7 +143,7 @@ class ConcurrentViewPlugin {
   /**
    * validates player access
    * @param cb
-     */
+   */
   validatePlay(cb) {
 
     this.makeRequest(
@@ -165,9 +177,14 @@ class ConcurrentViewPlugin {
           cb(null, ok);
 
           this.player.trigger({
-            type: 'avplayercanplay',
+            type: 'tbxplayercanplay',
             code: 1
           });
+
+          // Save the starting date if null
+          if (!this.startDate) {
+            this.startDate = Date.now();
+          }
         } else {
           cb(new Error('Player Auth error'), null);
         }
@@ -182,7 +199,7 @@ class ConcurrentViewPlugin {
    * @param code
    * @param error
    * @param reason
-     */
+   */
   blockPlayer(code, error, reason) {
     code = code || 'error';
     reason = reason || 'Has alcanzado la cantidad maxima de players activos.';
@@ -190,21 +207,27 @@ class ConcurrentViewPlugin {
     videojs.log('concurrenceview: stop player - ', reason);
 
     this.player.trigger({
-      type: 'avplayerbloked',
+      type: 'tbxplayerblocked',
       code,
       reason,
       error
     });
-
+    
     this.player.pause();
     this.player.dispose();
+
+    if (this.options.showAlert) {
+      setTimeout(() => {
+	      alert(this.options.errorMsg);
+      }, 0);
+    }
   }
 
   /**
    * get last position
    *
    * @param info
-     */
+   */
   recoverStatus(info) {
     if (!info.position) {
       return;
@@ -222,7 +245,7 @@ class ConcurrentViewPlugin {
    * creates a monitor interval
    *
    * @param ok
-     */
+   */
   makeWatchdog(ok) {
 
     let watchdog = null;
@@ -262,7 +285,8 @@ class ConcurrentViewPlugin {
             token: playerToken,
             status: 'paused'
           },
-          () => {}
+          () => {
+          }
         );
 
       }
@@ -275,12 +299,11 @@ class ConcurrentViewPlugin {
     if (!watchdog) {
 
       let pendingRequest = false;
-
       // real watchdog
       let wdf = () => {
 
         player.trigger({
-          type: 'avplayerupdate',
+          type: 'tbxplayerupdate',
           playerID
         });
 
@@ -296,7 +319,9 @@ class ConcurrentViewPlugin {
             player: playerID,
             token: playerToken,
             position: lasTime,
-            status: player.paused() ? 'paused' : 'playing'
+            status: player.paused() ? 'paused' : 'playing',
+            event: 'Progress',
+            timeSpent: getTimeSpent(this.startDate)
           },
           (error, response) => {
 
@@ -323,6 +348,7 @@ class ConcurrentViewPlugin {
             if (response && response.success) {
               playerID = response.player || playerID;
               playerToken = response.token || playerToken;
+              this.playerToken = playerToken;
 
             } else {
               videojs.log(new Error('Player Auth error'), response);
@@ -337,9 +363,7 @@ class ConcurrentViewPlugin {
       // call & block
       wdf();
     }
-
   }
-
 }
 
 /**
