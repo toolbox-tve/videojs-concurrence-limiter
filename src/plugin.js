@@ -421,7 +421,7 @@ const concurrenceLimiter = function(useroptions) {
 
     let options = videojs.mergeOptions(defaults, useroptions);
 
-    videojs.log('concurrenceview plugin');
+    //videojs.log('concurrenceview plugin');
 
     if (!options.accessurl || !options.updateurl || !options.disposeurl) {
       videojs.log('concurrenceview: invalid urls');
