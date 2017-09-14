@@ -267,11 +267,11 @@ class ConcurrentViewPlugin {
       lasTime = Math.round(player.currentTime() || 0);
     });
 
-    videojs.log('concurrence plugin: ok', ok);
+    //videojs.log('concurrence plugin: ok', ok);
 
     // clear after dispose
     let cleanUp = () => {
-      videojs.log('concurrenceview: DISPOSE', options);
+      //videojs.log('concurrenceview: DISPOSE');
 
       if (watchdog) {
         player.clearInterval(watchdog);
@@ -421,15 +421,15 @@ const concurrenceLimiter = function(useroptions) {
 
     let options = videojs.mergeOptions(defaults, useroptions);
 
-    videojs.log('concurrenceview plugin', options);
+    videojs.log('concurrenceview plugin');
 
     if (!options.accessurl || !options.updateurl || !options.disposeurl) {
-      videojs.log('concurrenceview: invalid urls', options);
+      videojs.log('concurrenceview: invalid urls');
       return;
     }
 
     if (!options.interval || options.interval < 5) {
-      videojs.log('concurrenceview: invalid options', options);
+      videojs.log('concurrenceview: invalid options');
       return;
     }
 
