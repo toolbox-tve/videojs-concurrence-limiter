@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 0.5.0 (2017-09-25)
+
+* PlayerID from videojs
+* Deleted ConcurrenceViewIdMaker
+
 ## 0.4.8 (2017-08-24)
 
 * Added option showAlert (default: true)

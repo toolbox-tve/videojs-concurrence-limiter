@@ -26,61 +26,6 @@ function getTimeSpent(start) {
 }
 
 /**
- * creates player ids
- */
-class ConcurrentViewIdMaker {
-
-  constructor() {
-    this.sessionStorageKey = 'vcl-player-id';
-  }
-
-  /**
-   * create id (if needed)
-   * @param options
-   * @returns {*}
-   */
-  generate(options) {
-
-    // user-made id
-    if (options.playerID) {
-      return options.playerID;
-    }
-
-    return this.generateBySessionStorage() || ('rdm-' + this.generateRandom());
-  }
-
-  /**
-   * random words
-   * @param len
-   * @returns {string}
-   */
-  generateRandom(len) {
-    return Math.random().toString((len || 30) + 2).substr(2);
-  }
-
-  /**
-   * sessionStorage id
-   * @returns {null}
-   */
-  generateBySessionStorage() {
-
-    if (!window.sessionStorage) {
-      return null;
-    }
-
-    let id = window.sessionStorage.getItem(this.sessionStorageKey);
-
-    if (!id) {
-      id = 'ssi-' + this.generateRandom();
-      window.sessionStorage.setItem(this.sessionStorageKey, id);
-    }
-
-    return id;
-  }
-
-}
-
-/**
  * main plugin component class
  */
 class ConcurrentViewPlugin {
@@ -91,7 +36,7 @@ class ConcurrentViewPlugin {
     this.eventsFlags = {};
     this.updateFailsCount = 1;
 
-    this.options.playerID = new ConcurrentViewIdMaker().generate(options);
+    this.options.playerID = player._playerID;
 
     this.playerToken = null;
     this.startDate = null;
@@ -149,7 +94,7 @@ class ConcurrentViewPlugin {
     this.makeRequest(
       this.options.accessurl,
       {
-        player: this.options.playerID
+        player: this.options.playerID || ''
       },
       (error, ok) => {
         if (error) {
@@ -212,7 +157,7 @@ class ConcurrentViewPlugin {
       reason,
       error
     });
-    
+
     this.player.pause();
     this.player.dispose();
 
