@@ -228,7 +228,8 @@ class ConcurrentViewPlugin {
             player: playerID,
             position: lasTime,
             token: playerToken,
-            status: 'paused'
+            status: 'paused',
+            timeSpent: getTimeSpent(this.startDate)
           },
           () => {
           }
