@@ -28,15 +28,19 @@ export function log() {
  */
 export function validateRequiredOpts(options) {
     const URI_PATTERN = /(http(s)?:\/\/.)?(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)/i;
+    //TODO: PATTERN regex check commented until found a better regex for URI.
     let schema = {
         accessurl: (value) => {
-          return URI_PATTERN.test(value);
+          //return URI_PATTERN.test(value);
+          return typeof(value) === 'string' && value.trim().length > 0;
         },
         updateurl: (value) => {
-            return URI_PATTERN.test(value);
+            //return URI_PATTERN.test(value);
+            return typeof(value) === 'string' && value.trim().length > 0;
         },
         disposeurl: (value) => {
-            return URI_PATTERN.test(value);
+            //return URI_PATTERN.test(value);
+            return typeof(value) === 'string' && value.trim().length > 0;
         },
         interval: (value) => {
             return value && !isNaN(value) && parseInt(value) <= 10;
