@@ -23,9 +23,10 @@
       var player = window.player = videojs('videojs-concurrence-limiter-player');
 
       player.concurrenceLimiter({
-        accessurl: '/limiter/canplay',
-        updateurl: '/limiter/playing',
-        disposeurl: '/limiter/stop',
+        accessurl: 'https://limiter.com/canplay',
+        updateurl: 'https://limiter.com/playing',
+        disposeurl: 'https://limiter.com/stop',
+        playerID: 'id-player',
         startPosition: 1
       });
 

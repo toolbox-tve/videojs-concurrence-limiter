@@ -1,5 +1,14 @@
+'use strict';
+/**
+ * videojs-concurrence-limiter
+ * Plugin loader
+ *
+ * @file plugin.js
+ * @module concurrenceLimiterPlugin
+ **/
 import videojs from 'video.js';
-import merge from 'deepmerge';
+import ConcurrentViewPlugin from './ConcurrentView';
+import { log, validateRequiredOpts } from './utils';
 
 // Default options for the plugin.
 const defaults = {
@@ -18,299 +27,6 @@ const defaults = {
   errorMsg: 'Bloqueado por límite de concurrencia.'
 };
 
-function getTimeSpent(start) {
-  if (!start) {
-    return null;
-  }
-  return Math.round((Date.now() - start) / 1000);
-}
-
-/**
- * main plugin component class
- */
-class ConcurrentViewPlugin {
-
-  constructor(options, player) {
-    this.options = options;
-    this.player = player;
-    this.eventsFlags = {};
-    this.updateFailsCount = 1;
-
-    this.options.playerID = player._playerID;
-
-    this.playerToken = null;
-    this.startDate = null;
-  }
-
-  /**
-   * hook into player events right after player is ready to set flags for later checks
-   */
-  hookPlayerEvents() {
-    this.player.on('loadedmetadata', () => this.eventsFlags.loadedmetadata = true);
-  }
-
-  /**
-   * xhr alias
-   *
-   * @param url
-   * @param data
-   * @param cb
-   */
-  makeRequest(url, data, cb) {
-    let requestConfig = {
-      body: data ? JSON.stringify(data) : '{}',
-      url,
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    };
-
-    requestConfig = merge(requestConfig, this.options.request);
-
-    videojs.xhr(
-      requestConfig,
-      (err, resp, body) => {
-
-        let bodyJson;
-
-        try {
-          bodyJson = body ? JSON.parse(body) : {error: 'invalid body', body};
-        } catch (e) {
-          bodyJson = null;
-        }
-
-        cb(err ? err.message || err : null, bodyJson);
-      }
-    );
-  }
-
-  /**
-   * validates player access
-   * @param cb
-   */
-  validatePlay(cb) {
-
-    this.makeRequest(
-      this.options.accessurl,
-      {
-        player: this.options.playerID || ''
-      },
-      (error, ok) => {
-        if (error) {
-          videojs.log('concurrenceview: accessurl api error', error);
-
-          if (this.updateFailsCount >= this.options.maxUpdateFails) {
-            cb(new Error(error), null);
-
-          } else {
-
-            videojs.log('concurrenceview: accessurl retry',
-              this.updateFailsCount, this.options.maxUpdateFails);
-
-            this.updateFailsCount++;
-            // try again
-            this.player.setTimeout(() => this.validatePlay(cb), 200);
-          }
-
-          return;
-        }
-
-        this.updateFailsCount = 1;
-
-        if (ok && ok.success) {
-          cb(null, ok);
-
-          this.player.trigger({
-            type: 'tbxplayercanplay',
-            code: 1
-          });
-
-          // Save the starting date if null
-          if (!this.startDate) {
-            this.startDate = Date.now();
-          }
-        } else {
-          cb(new Error('Player Auth error'), null);
-        }
-      }
-    );
-
-  }
-
-  /**
-   * disposes current player instance
-   *
-   * @param code
-   * @param error
-   * @param reason
-   */
-  blockPlayer(code, error, reason) {
-    code = code || 'error';
-    reason = reason || 'Has alcanzado la cantidad maxima de players activos.';
-
-    videojs.log('concurrenceview: stop player - ', reason);
-
-    this.player.trigger({
-      type: 'tbxplayerblocked',
-      code,
-      reason,
-      error
-    });
-
-    this.player.pause();
-    this.player.dispose();
-
-    if (this.options.showAlert) {
-      setTimeout(() => {
-	      alert(this.options.errorMsg);
-      }, 0);
-    }
-  }
-
-  /**
-   * get last position
-   *
-   * @param info
-   */
-  recoverStatus(info) {
-    if (!info.position) {
-      return;
-    }
-
-    this.player.currentTime = info.position;
-
-    this.player.on('loadedmetadata', () => this.currentTime = info.position);
-
-  }
-
-  /* ************** */
-
-  /**
-   * creates a monitor interval
-   *
-   * @param ok
-   */
-  makeWatchdog(ok) {
-
-    let watchdog = null;
-    let options = this.options;
-    let player = this.player;
-
-    let lasTime = options.startPosition || 0;
-    let playerToken = null;
-    let playerID = options.playerID;
-
-    player.on('timeupdate', (e) => {
-
-      // waits until 'loadedmetadata' event is raised
-      if (!this.eventsFlags.loadedmetadata || !this.firstSent) {
-        this.firstSent = true;
-        return;
-      }
-
-      lasTime = Math.round(player.currentTime() || 0);
-    });
-
-    //videojs.log('concurrence plugin: ok', ok);
-
-    // clear after dispose
-    let cleanUp = () => {
-      //videojs.log('concurrenceview: DISPOSE');
-
-      if (watchdog) {
-        player.clearInterval(watchdog);
-        watchdog = false;
-
-        this.makeRequest(
-          options.disposeurl,
-          {
-            player: playerID,
-            position: lasTime,
-            token: playerToken,
-            status: 'paused',
-            timeSpent: getTimeSpent(this.startDate)
-          },
-          () => {
-          }
-        );
-
-      }
-    };
-
-    // add hooks
-    player.on('dispose', cleanUp);
-    window.addEventListener('beforeunload', cleanUp);
-
-    if (!watchdog) {
-
-      let pendingRequest = false;
-      // real watchdog
-      let wdf = () => {
-
-        player.trigger({
-          type: 'tbxplayerupdate',
-          playerID
-        });
-
-        // avoid conflicts
-        if (pendingRequest) {
-          return;
-        }
-        pendingRequest = true;
-
-        this.makeRequest(
-          options.updateurl,
-          {
-            player: playerID,
-            token: playerToken,
-            position: lasTime,
-            status: player.paused() ? 'paused' : 'playing',
-            event: 'Progress',
-            timeSpent: getTimeSpent(this.startDate)
-          },
-          (error, response) => {
-
-            pendingRequest = false;
-
-            if (error) {
-              videojs.log('concurrenceview: updateurl api error', error);
-
-              // allow some error level
-              if (this.updateFailsCount >= options.maxUpdateFails) {
-                this.blockPlayer(player, 'authapifail', {msg: error});
-              }
-
-              videojs.log('concurrenceview: updateurl retry later',
-                this.updateFailsCount, options.maxUpdateFails);
-
-              this.updateFailsCount++;
-
-              return;
-            }
-
-            this.updateFailsCount = 1;
-
-            if (response && response.success) {
-              playerID = response.player || playerID;
-              playerToken = response.token || playerToken;
-              this.playerToken = playerToken;
-
-            } else {
-              videojs.log(new Error('Player Auth error'), response);
-              this.blockPlayer(player, 'noauth', response);
-            }
-          }
-        );
-      };
-
-      watchdog = player.setInterval(wdf, options.interval * 1000);
-
-      // call & block
-      wdf();
-    }
-  }
-}
 
 /**
  * Function to invoke when the player is ready.
@@ -324,6 +40,7 @@ class ConcurrentViewPlugin {
  * @param    {Object} [options={}]
  */
 const onPlayerReady = (player, options) => {
+
   player.addClass('vjs-concurrence-limiter');
 
   player._cvPlugin = new ConcurrentViewPlugin(options, player);
@@ -335,7 +52,7 @@ const onPlayerReady = (player, options) => {
   cvPlugin.validatePlay((error, ok) => {
 
     if (error) {
-      videojs.log('concurrenceview: error', error);
+      log(' error', error);
       cvPlugin.blockPlayer('cantplay', error);
 
     } else {
@@ -362,29 +79,21 @@ const onPlayerReady = (player, options) => {
  *           An object of options left to the plugin author to define.
  */
 const concurrenceLimiter = function(useroptions) {
+  let options = videojs.mergeOptions(defaults, useroptions);
+
+  if (!validateRequiredOpts(options)) {
+    return;
+  }
 
   this.ready(() => {
-
-    let options = videojs.mergeOptions(defaults, useroptions);
-
-    //videojs.log('concurrenceview plugin');
-
-    if (!options.accessurl || !options.updateurl || !options.disposeurl) {
-      videojs.log('concurrenceview: invalid urls');
-      return;
-    }
-
-    if (!options.interval || options.interval < 5) {
-      videojs.log('concurrenceview: invalid options');
-      return;
-    }
 
     onPlayerReady(this, options);
   });
 };
 
 // Register the plugin with video.js.
-videojs.plugin('concurrenceLimiter', concurrenceLimiter);
+const registerPlugin = videojs.registerPlugin || videojs.plugin;
+registerPlugin('concurrenceLimiter', concurrenceLimiter);
 
 // Include the version number.
 concurrenceLimiter.VERSION = '__VERSION__';
