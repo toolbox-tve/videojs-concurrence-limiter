@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 0.6.4 (2018-01-04)
+
+* Add option validations
+* Base code rewrite and update dependencies
+
 ## 0.5.1 (2017-11-09)
 
 * TimeSpent on stop call

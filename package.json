@@ -1,6 +1,6 @@
 {
   "name": "videojs-concurrence-limiter",
-  "version": "0.6.3",
+  "version": "0.6.4",
   "description": "A Video.js plugin for concurrency control on played contents",
   "repository": {
     "type": "git",
