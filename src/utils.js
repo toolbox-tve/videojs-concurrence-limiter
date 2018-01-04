@@ -29,9 +29,6 @@ export function log() {
 export function validateRequiredOpts(options) {
     const URI_PATTERN = /(http(s)?:\/\/.)?(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)/i;
     let schema = {
-        playerID: (value) => {
-          return value !== null || typeof(value) !== 'undefined';
-        },
         accessurl: (value) => {
           return URI_PATTERN.test(value);
         },

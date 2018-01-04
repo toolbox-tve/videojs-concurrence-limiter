@@ -87,6 +87,11 @@ const concurrenceLimiter = function(useroptions) {
 
   this.ready(() => {
 
+    if (!options.playerID) {
+      // If playerID option isn't provided try to get it from player instance:
+      options.playerID = this.playerID || null;
+    }
+
     onPlayerReady(this, options);
   });
 };
