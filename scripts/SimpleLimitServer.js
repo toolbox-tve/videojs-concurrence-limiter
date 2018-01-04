@@ -15,7 +15,6 @@ class SimpleLimitServer {
    * @returns {*}
      */
   canplay(params) {
-
     let players = Object.keys(this.players);
     let canplay = true;
 
