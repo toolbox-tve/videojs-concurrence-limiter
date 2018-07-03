@@ -1,153 +1,67 @@
-Video.js Concurrence Limiter
-============================
+# videojs-concurrence-limiter
 
-A Video.js plugin for concurrency control on played contents
+A Video.js plugin for concurrency control
 
-Contents
---------
-1. [Installation](#installation)
-1. [Dependencies](#dependencies)
-1. [Usage](#usage)
-1. [Options](#options)
-1. [TODO](#TODO)
+## Table of Contents
 
-### Installation
-----------------
+<!-- START doctoc -->
+<!-- END doctoc -->
+## Installation
 
-The *dist* folder contains the library bundles: for debugging or the minfied version.
-
-##### Development:
-- Install the dependencies with npm:
 ```sh
-$ npm install
-```
-- You can test with te example folder and using gulp to watch changes:
-```sh
-$ npm run watch
-```
-- To generate a build:
-```sh
-$ npm run build
-```
-- Run linter:
-```sh
-$ npm run lint
+npm install --save videojs-concurrence-limiter
 ```
 
-##### Testing:
-Unit Test are on test folder, using karma & qunit:
-```sh
-$ npm run test
-```
-- Run Specific browser tests:
-```sh
-$ npm run test:chrome
-$ npm run test:firefox
-$ npm run test:ie
-$ npm run test:safari
-```
+## Usage
 
-### Dependencies
-----------------
+To include videojs-concurrence-limiter on your website or web application, use any of the following methods.
 
-The plugin has the following mandatory dependencies:
+### `<script>` Tag
 
-- [Video.js](https://github.com/videojs/video.js) - HTML5 media player that provides the user interface.
-
-- [jQuery](http://jquery.com) - Cross-platform Javascript library for client-side scripting.
-
-### Usage
----------
-
-First include video.js library and stylesheet.
-
-The videojs-concurrence-limiter plugin automatically register itself to Video.JS when include
-the script on page:
+This is the simplest case. Get the script in whatever way you prefer and include the plugin _after_ you include [video.js][videojs], so that the `videojs` global is available.
 
 ```html
-<script src="videojs.concurrence.js"></script>
+<script src="//path/to/video.min.js"></script>
+<script src="//path/to/videojs-concurrence-limiter.min.js"></script>
+<script>
+  var player = videojs('my-video');
+
+  player.concurrenceLimiter();
+</script>
 ```
-or the minified version:
-```html
-<script src="videojs.concurrence.min.js"></script>
+
+### Browserify/CommonJS
+
+When using with Browserify, install videojs-concurrence-limiter via npm and `require` the plugin as you would any other module.
+
+```js
+var videojs = require('video.js');
+
+// The actual plugin function is exported by this module, but it is also
+// attached to the `Player.prototype`; so, there is no need to assign it
+// to a variable.
+require('videojs-concurrence-limiter');
+
+var player = videojs('my-video');
+
+player.concurrenceLimiter();
 ```
 
-### Options
------------
+### RequireJS/AMD
 
-Configure the player using the Video.js
-[options](https://github.com/videojs/video.js/blob/master/docs/guides/options.md),
-and enable the plugin by adding a `concurrenceview` configuration to `plugins`. For
-example:
+When using with RequireJS (or another AMD library), get the script in whatever way you prefer and `require` the plugin as you normally would:
 
-```javascript
-var player = videojs("myVideo",
-{
-    // video.js options
-    controls: true,
-    loop: false,
-    width: 320,
-    height: 240,
-    plugins: {
-        // videojs-concurrence-limiter plugin options
-        concurrenceLimiter: {
-          // options here
-        }
-    }
+```js
+require(['video.js', 'videojs-concurrence-limiter'], function(videojs) {
+  var player = videojs('my-video');
+
+  player.concurrenceLimiter();
 });
 ```
-##### Available options:
-| Option | Required | Type | Default | Description |
-| --- | --- | --- | --- | --- |
-| interval | false | number | 10 | Plugin update interval, in seconds |
-| playerID | false | string | _null_ | Current player id, if null, the player generates one |
-| accessurl | true | string | `none` | Server url for access request |
-| updateurl | true | string | `none` | Server update url |
-| disposeurl | true | string | `none` | Server dispose/stop url |
-| startPosition | true | number | `none` | Player starting position for updates |
-| maxUpdateFails | true | number | 1 | Max http failures for 'updateurl' before error event |
-| request | false | object | [see below] | Player http requests configuration |
 
-##### Available options for ```request``` config:
-- Any given options will be deep-merged with the plugin defaults. Allowed configs can be found under https://www.npmjs.com/package/xhr.
-- Defaults options are:
+## License
 
-| Option | Value |
-| --- | --- |
-| timeout | ```15000``` |
-| method | ```'POST'``` |
-| headers | ```{ 'Content-Type': 'application/json' }``` |
-
-### Request & Response formats
------------
-Standar format:
-
-request:
-```json
-{
-  player: 'a player id',
-  position: currentPlayerTime,
-  token: 'SomeHelpfulValidationTokenFromServer',
-  status: 'currentPlayerStatus'
-}
-```
-
-response:
-```json
-{
-  success: true|false,
-  player: 'a player id',
-  token: 'SomeHelpfulValidationTokenFromServer',
-  position: positionFromParams,
-  status: statusFromParams
-}
-```
+Apache-2.0. Copyright (c) Toolbox-tve
 
 
-See SimpleLimitServer.js for more information and usage
-
-### TODO
---------
-
-- [ ] Add Request/Response information.
-- [ ] Create unit test specs.
+[videojs]: http://videojs.com/

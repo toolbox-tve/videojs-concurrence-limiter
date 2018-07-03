@@ -1,106 +1,117 @@
-'use strict';
-/**
- * videojs-concurrence-limiter
- * Plugin loader
- *
- * @file plugin.js
- * @module concurrenceLimiterPlugin
- **/
 import videojs from 'video.js';
-import ConcurrentViewPlugin from './ConcurrentView';
-import { log, validateRequiredOpts } from './utils';
+import {version as VERSION} from '../package.json';
+
+const Plugin = videojs.getPlugin('plugin');
 
 // Default options for the plugin.
 const defaults = {
   interval: 10,
-  accessurl: null,
-  updateurl: null,
-  disposeurl: null,
-  playerID: null,
-  startPosition: 0,
-  maxUpdateFails: 3,
-  request: {
-    timeout: 15 * 1000,
-    headers: {}
+  access: {
+    url: null,
+    retry: 0
   },
-  showAlert: true,
-  errorMsg: 'Bloqueado por límite de concurrencia.'
-};
-
-
-/**
- * Function to invoke when the player is ready.
- *
- * This is a great place for your plugin to initialize itself. When this
- * function is called, the player will have its DOM and child components
- * in place.
- *
- * @function onPlayerReady
- * @param    {Player} player
- * @param    {Object} [options={}]
- */
-const onPlayerReady = (player, options) => {
-
-  player.addClass('vjs-concurrence-limiter');
-
-  player._cvPlugin = new ConcurrentViewPlugin(options, player);
-  let cvPlugin = player._cvPlugin;
-
-  // Hook into player events after player is ready to avoid missing first triggered events
-  cvPlugin.hookPlayerEvents();
-
-  cvPlugin.validatePlay((error, ok) => {
-
-    if (error) {
-      log(' error', error);
-      cvPlugin.blockPlayer('cantplay', error);
-
-    } else {
-
-      cvPlugin.recoverStatus(ok);
-      // monitor
-      cvPlugin.makeWatchdog(ok);
-    }
-
-  });
-
+  update: {
+    url: null,
+    retry: 3
+  },
+  dispose: {
+    url: null,
+    retry: 0
+  },
+  playerId: null,
+  requestOptions: {
+    timeout: 15,
+    headers: {}
+  }
 };
 
 /**
- * A video.js plugin.
+ * An advanced Video.js plugin. For more information on the API
  *
- * In the plugin function, the value of `this` is a video.js `Player`
- * instance. You cannot rely on the player being in a "ready" state here,
- * depending on how the plugin is invoked. This may or may not be important
- * to you; if not, remove the wait for "ready"!
- *
- * @function concurrenceLimiter
- * @param    {Object} [options={}]
- *           An object of options left to the plugin author to define.
+ * See: https://blog.videojs.com/feature-spotlight-advanced-plugins/
  */
-const concurrenceLimiter = function(useroptions) {
-  let options = videojs.mergeOptions(defaults, useroptions);
+class ConcurrenceLimiter extends Plugin {
 
-  if (!validateRequiredOpts(options)) {
-    return;
+  /**
+   * Create a ConcurrenceLimiter plugin instance.
+   *
+   * @param  {Player} player
+   *         A Video.js Player instance.
+   *
+   * @param  {Object} [options]
+   *         An optional options object.
+   *
+   *         While not a core part of the Video.js plugin architecture, a
+   *         second argument of options is a convenient way to accept inputs
+   *         from your plugin's caller.
+   */
+  constructor(player, options) {
+    // the parent class will add player under this.player
+    super(player);
+    this.options = videojs.mergeOptions(defaults, options);
+
+    this.player.ready(() => {
+      this.player.addClass('vjs-concurrence-limiter');
+    });
   }
 
-  this.ready(() => {
+  makeRequest(url, options, retry) {
+    const controller = new AbortController();
+    let timeoutId = null;
 
-    if (!options.playerID) {
-      // If playerID option isn't provided try to get it from player instance:
-      options.playerID = this.playerID || this.id_;
+    // Avoid conflicts
+    if (this.pendingRequest) {
+      return;
     }
 
-    onPlayerReady(this, options);
-  });
-};
+    options.signal = controller.signal;
+    this.pendingRequest = true;
+    timeoutId = setTimeout(() => controller.abort(), options.timeout * 1000);
 
-// Register the plugin with video.js.
-const registerPlugin = videojs.registerPlugin || videojs.plugin;
-registerPlugin('concurrenceLimiter', concurrenceLimiter);
+    fetch(url, options)
+      .then(res => {
+        clearTimeout(timeoutId);
+        if (res.ok) {
+          this.pendingRequest = false;
+          return res.json();
+        }
+        throw new Error('Response error');
+      })
+      .catch(error => {
+        clearTimeout(timeoutId);
+        if (retry > 0) {
+          this.pendingRequest = false;
+          this.makeRequest(url, options, retry - 1);
+        } else {
+          // TODO: erase player
+        }
+      });
+  }
+
+  validatePlay() {
+    const access = this.options.access;
+
+    this.makeRequest(access.url, this.options.requestOptions, access.retry)
+      .then(res => {
+        // TODO: call
+        this.intervalId = setInterval(this.update, this.options.interval * 1000);
+      });
+  }
+
+  update() {
+    const update = this.options.update;
+
+    this.makeRequest(update.url, this.options.requestOptions, update.retry);
+  }
+}
+
+// Define default values for the plugin's `state` object here.
+ConcurrenceLimiter.defaultState = {};
 
 // Include the version number.
-concurrenceLimiter.VERSION = '__VERSION__';
+ConcurrenceLimiter.VERSION = VERSION;
 
-export default concurrenceLimiter;
+// Register the plugin with video.js.
+videojs.registerPlugin('concurrenceLimiter', ConcurrenceLimiter);
+
+export default ConcurrenceLimiter;

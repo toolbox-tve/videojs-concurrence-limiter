@@ -1,15 +1,14 @@
 {
   "generator-videojs-plugin": {
-    "bcov": false,
     "scope": "",
     "name": "concurrence-limiter",
-    "description": "A Video.js plugin for concurrency control on played contents",
-    "author": "ToolBox-tve",
+    "description": "A Video.js plugin for concurrency control",
+    "author": "Toolbox-tve",
     "license": "apache2",
-    "changelog": false,
-    "sass": true,
-    "docs": false,
+    "pluginType": "advanced",
+    "css": true,
+    "docs": true,
     "lang": true,
-    "bower": false
+    "husky": "none"
   }
 }
