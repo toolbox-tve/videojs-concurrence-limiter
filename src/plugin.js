@@ -1,5 +1,6 @@
 import videojs from 'video.js';
 import {version as VERSION} from '../package.json';
+import CustomError, {ErrorCodes} from './ErrorHandler/CustomError';
 
 const Plugin = videojs.getPlugin('plugin');
 
@@ -7,15 +8,15 @@ const Plugin = videojs.getPlugin('plugin');
 const defaults = {
   interval: 10,
   access: {
-    url: 'http://localhost:3000/canplay',
+    url: 'http://localhost:55555/canplay',
     retry: 0
   },
   update: {
-    url: 'http://localhost:3000/nowplaying',
-    retry: 3
+    url: 'http://localhost:55555/nowplaying',
+    retry: 1
   },
   stop: {
-    url: 'http://localhost:3000/stop',
+    url: 'http://localhost:55555/stop',
     retry: 0
   },
   playerId: 'ssi-b7ture9aj',
@@ -28,7 +29,7 @@ const defaults = {
     }
   },
   showAlert: true,
-  errorMsg: 'Bloqueado por límite de concurrencia.'
+  errorMsg: null
 };
 
 /**
@@ -98,7 +99,7 @@ class ConcurrenceLimiter extends Plugin {
         if (!res.success || res.player !== this.options.playerId) {
           // Don't retry if server response denies concurrence
           retry = 0;
-          throw new Error('Concurrence denied by server');
+          throw new CustomError(ErrorCodes.deniedConcurrence);
         }
         return res;
       })
@@ -108,9 +109,7 @@ class ConcurrenceLimiter extends Plugin {
           this.pendingRequest = false;
           this.makeRequest(url, options, retry - 1);
         } else {
-          videojs.log.error(error);
-          // TODO: erase player and show concurrence error
-          this.blockPlayer();
+          this.blockPlayer(error);
         }
       });
   }
@@ -173,11 +172,18 @@ class ConcurrenceLimiter extends Plugin {
     super.dispose();
   }
 
-  blockPlayer() {
-    this.player.trigger('tbxplayerblocked');
+  blockPlayer(rawError) {
+    let error = rawError;
+    if (error.name !== 'CustomError') {
+      error = CustomError.parseError(rawError);
+    }
+
+    videojs.log.error(error);
+    this.player.trigger('tbxplayerblocked', error);
 
     if (this.options.showAlert) {
-      setTimeout(() => alert(this.options.errorMsg), 0);
+      const msg = this.options.errorMsg || this.player.localize(error.code);
+      setTimeout(() => alert(msg), 0);
     }
 
     this.player.dispose();

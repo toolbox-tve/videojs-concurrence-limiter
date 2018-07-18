@@ -29,7 +29,7 @@
     "pretest": "npm-run-all lint build",
     "test": "karma start scripts/karma.conf.js",
     "preversion": "npm test",
-    "version": "node scripts/version.js",
+    "version": "nodemon ./scripts/version.js",
     "watch": "npm-run-all -p watch:*",
     "watch:css": "npm run build:css -- -w",
     "watch:js": "npm run build:js -- -w",

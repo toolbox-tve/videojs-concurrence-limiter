@@ -15,10 +15,10 @@ app.post('/canplay', (req, res) => {
 });
 
 app.post('/nowplaying', (req, res) => {
-  res.json({
-    success: false,
+  setTimeout(() => res.json({
+    success: true,
     player: 'ssi-b7ture9aj'
-  });
+  }), 150000);
   /* if (counter > 0) {
     counter = counter - 1;
     res.sendStatus(400);
@@ -40,6 +40,6 @@ app.post('/stop', (req, res) => {
 });
 
 
-app.listen(3000, () => {
-  console.log(`> Running on localhost:3000`);
+app.listen(55555, () => {
+  console.log(`> Running on localhost:55555c`);
 });
