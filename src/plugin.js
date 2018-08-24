@@ -124,7 +124,7 @@ class ConcurrenceLimiter extends Plugin {
 
     this.makeRequest(access.url, request, access.retry)
       .then(res => {
-        this.player.trigger('tbxplayercanplay');
+        this.player.trigger('tbxplayeraccess');
         // Start update interval binding this (ConcurrenceLimiter)
         this.intervalId = setInterval(this.update.bind(this), this.options.interval * 1000);
       })
