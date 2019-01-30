@@ -111,7 +111,7 @@ module.exports = function(config) {
       'node_modules/video.js/dist/video.js',
       'test/dist/bundle.js'
     ],
-    port: 9999,
+    port: 9997,
     urlRoot: '/test/',
     plugins: [
       {'middleware:static': ['factory', StaticMiddlewareFactory]},

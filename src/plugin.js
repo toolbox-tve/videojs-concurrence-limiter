@@ -2,6 +2,12 @@ import videojs from 'video.js';
 import {version as VERSION} from '../package.json';
 import CustomError, {ErrorCodes} from './ErrorHandler/CustomError';
 
+import english from '../lang/en.json';
+import spanish from '../lang/es.json';
+
+videojs.addLanguage('en', english);
+videojs.addLanguage('es', spanish);
+
 const Plugin = videojs.getPlugin('plugin');
 
 // Default options for the plugin.
