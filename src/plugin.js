@@ -25,7 +25,7 @@ const defaults = {
     url: 'http://localhost:55555/stop',
     retry: 0
   },
-  playerId: 'ssi-b7ture9aj',
+  playerId: 'default-player-id',
   request: {
     method: 'POST',
     timeout: 15,
@@ -68,6 +68,8 @@ class ConcurrenceLimiter extends Plugin {
       token: '',
       intervalId: 0
     });
+
+    this.options.playerId = player.playerId || this.options.playerId;
 
     this.player.ready(() => {
       this.player.addClass('vjs-concurrence-limiter');
