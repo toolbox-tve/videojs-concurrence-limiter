@@ -1,6 +1,6 @@
 {
   "name": "videojs-concurrence-limiter",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A Video.js plugin for concurrency control",
   "main": "dist/videojs-concurrence-limiter.cjs.js",
   "module": "dist/videojs-concurrence-limiter.es.js",
